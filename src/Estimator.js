@@ -2,127 +2,200 @@ import React from 'react';
 import DataFrame from "dataframe-js";
 
 import FileInput from './fileinput';
+import LoadingGif from './loading.gif';
+
+const d3 = require("d3");
+const postalCodeToName = {
+  al: "Alabama",
+  ak: "Alaska",
+  az: "Arizona",
+  ar: "Arkansas",
+  ca: "California",
+  co: "Colorado",
+  ct: "Connecticut",
+  de: "Delaware",
+  fl: "Florida",
+  ga: "Georgia",
+  hi: "Hawaii",
+  id: "Idaho",
+  il: "Illinois",
+  in: "Indiana",
+  ia: "Iowa",
+  ks: "Kansas",
+  ky: "Kentucky",
+  la: "Louisiana",
+  me: "Maine",
+  mh: "Marshall Islands",
+  md: "Maryland",
+  ma: "Massachusetts",
+  mi: "Michigan",
+  mn: "Minnesota",
+  ms: "Mississippi",
+  mo: "Missouri",
+  mt: "Montana",
+  ne: "Nebraska",
+  nv: "Nevada",
+  nh: "New Hampshire",
+  nj: "New Jersey",
+  nm: "New Mexico",
+  ny: "New York",
+  nc: "North Carolina",
+  nd: "North Dakota",
+  oh: "Ohio",
+  ok: "Oklahoma",
+  or: "Oregon",
+  pa: "Pennsylvania",
+  pr: "Puerto Rico",
+  ri: "Rhode Island",
+  sc: "South Carolina",
+  sd: "South Dakota",
+  tn: "Tennessee",
+  tx: "Texas",
+  ut: "Utah",
+  vt: "Vermont",
+  va: "Virginia",
+  wa: "Washington",
+  dc: "District of Columbia",
+  wv: "West Virginia",
+  wi: "Wisconsin",
+  wy: "Wyoming"
+};
+
+let df = null;
 
 function lowerState(txt) {
   txt = txt.trim();
   if (txt.length === 2) {
-      txt = ({
-        al: "Alabama",
-        ak: "Alaska",
-        az: "Arizona",
-        ar: "Arkansas",
-        ca: "California",
-        co: "Colorado",
-        ct: "Connecticut",
-        de: "Delaware",
-        fl: "Florida",
-        ga: "Georgia",
-        hi: "Hawaii",
-        id: "Idaho",
-        il: "Illinois",
-        in: "Indiana",
-        ia: "Iowa",
-        ks: "Kansas",
-        ky: "Kentucky",
-        la: "Louisiana",
-        me: "Maine",
-        mh: "Marshall Islands",
-        md: "Maryland",
-        ma: "Massachusetts",
-        mi: "Michigan",
-        mn: "Minnesota",
-        ms: "Mississippi",
-        mo: "Missouri",
-        mt: "Montana",
-        ne: "Nebraska",
-        nv: "Nevada",
-        nh: "New Hampshire",
-        nj: "New Jersey",
-        nm: "New Mexico",
-        ny: "New York",
-        nc: "North Carolina",
-        nd: "North Dakota",
-        oh: "Ohio",
-        ok: "Oklahoma",
-        or: "Oregon",
-        pa: "Pennsylvania",
-        pr: "Puerto Rico",
-        ri: "Rhode Island",
-        sc: "South Carolina",
-        sd: "South Dakota",
-        tn: "Tennessee",
-        tx: "Texas",
-        ut: "Utah",
-        vt: "Vermont",
-        va: "Virginia",
-        wa: "Washington",
-        dc: "District of Columbia",
-        wv: "West Virginia",
-        wi: "Wisconsin",
-        wy: "Wyoming"
-      })[txt.toLowerCase()]
+      txt = postalCodeToName[txt.toLowerCase()]
   }
   return txt.toLowerCase();
 }
+
+function parsedDate(date) {
+  let dd = String(date.getDate()).padStart(2, '0'),
+      mm = String(date.getMonth() + 1).padStart(2, '0'),
+      yyyy = date.getFullYear(),
+      str = yyyy + '-' + mm + '-' + dd;
+  return str;
+};
 
 export default class Estimator extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      uniStats: []
+      uniStats: [],
+      loading: true,
+      sortMode: 0
     }
   }
 
+  componentDidMount() {
+    d3.csv('/estimate-incoming/infections_data.csv').then(rows => {
+      // console.log(rows);
+      rows.forEach(r => r.location_name = r.location_name.toLowerCase().replace("georgia_two", "georgia"))
+      df = new DataFrame(rows, [
+        "date_reported","location_name","location_population","mean_admis","mean_deaths",
+        "mean_infections","upper_admis","upper_deaths","upper_infections","lower_admis",
+        "lower_deaths","lower_infections","cum_deaths","seroprevalence_mean",
+        "seroprevalence_upper","seroprevalence_lower","admis_mean_per_cap","admis_upper_per_cap",
+        "admis_lower_per_cap","deaths_mean_per_cap","deaths_upper_per_cap","deaths_lower_per_cap"]);
+      // infections_data.show(3);
+
+      fetch("/estimate-incoming/students.csv").then(res => res.text()).then(data => {
+        let rows = d3.csvParseRows(data);
+        rows.splice(0, 1);
+        this.fileUploaded(rows);
+      });
+    });
+  }
+
+  startLoading() {
+    this.setState({ loading: true })
+  }
+
   fileUploaded(rows) {
-    let states = rows.map((r) => {
-      if (r.includes("\t")) {
-        r = r.split("\t")
-      } else if (r.includes(",")) {
-        r = r.split(",")
-      } else {
-        console.error("row did not include tab or comma?")
-        return null
+    let states = rows.map((r) => [lowerState(r[0]), 1 * r[1]]),
+        days = [];
+    for (var i = 5; i<22; i++) {
+      var date = new Date();
+      date.setDate(date.getDate() - i);
+      let dateString = parsedDate(date);
+      days.push(dateString);
+    }
+
+    // input: [ [name, students] ]
+
+    states.forEach(state => {
+      let ourState = df.filter({'location_name':state[0]});
+      let popState = ourState.stat.mean('location_population');
+      let data = ourState.filter({'date_reported':days[0]});
+      for (var i = 1; i < days.length; i++) {
+        data = data.union(ourState.filter({'date_reported':days[i]}))
       }
-      return [lowerState(r[0]), 1 * r[1]];
-    }).filter(r => !isNaN(r[1]));
+      let pastInfections = data;
+      let currentPositives = pastInfections.stat.sum('mean_infections');
+      let probPositive = currentPositives / popState;
+      state.push(probPositive);
+    });
 
-    let input_df = new DataFrame(states, ["state", "students"]);
-    console.log(input_df.show(3));
+    // output: [[ name, students, fraction_prob_positive ]]
 
-    //
-    // [
-    //   { state: "New Hampshire", students: 5, positivity: ?, positiveStudents: ? }
-    // ]
-    //
-    // this.setState({
-    //   uniStats: data
-    // })
+    this.setState({
+      uniStats: states,
+      loading: false
+    })
+  }
+
+  sort(sortMode) {
+    this.setState({ sortMode: sortMode })
   }
 
   approxPositiveStudents() {
-    let stats = this.state.uniStats,
+    let states = this.state.uniStats,
         sum = 0,
-        students = 0,
+        allStudents = 0,
+        estStudents = 0,
+        matchedStates = 0,
         lines = [];
 
-    stats.forEach((state, i) => {
+    // default sort is A-Z
+    if (this.state.sortMode === 1) {
+      // sort by positivity
+      states = states.sort((a, b) => b[2] - a[2])
+    } else if (this.state.sortMode === 2) {
+      states = states.sort((a, b) => b[2] * b[1] - a[2] * a[1])
+    }
+
+    states.forEach((state, i) => {
       lines.push(<tr key={i}>
-        <td>{state.name}</td>
-        <td>{state.positivity}</td>
-        <td>{state.students}</td>
-        <td>{state.positives.toFixed(2)}</td>
+        <td>{state[0]}</td>
+        <td>{(state[2]*100).toFixed(2)}%</td>
+        <td>{state[1].toLocaleString()}</td>
+        <td>{(state[1] * state[2]).toFixed(2)}</td>
       </tr>)
-      students += state.students * 1;
-      sum += state.positives * 1;
+      allStudents += state[1] * 1;
+      if (!isNaN(state[2])) {
+        estStudents += state[1] * 1;
+        sum += state[1] * state[2];
+        matchedStates++;
+      }
     })
 
-    lines.push(<tr key="total">
-      <td><strong>Total</strong></td>
-      <td></td>
-      <td>{students}</td>
-      <td>Approximately<br/>{sum.toFixed(2)}</td>
-    </tr>)
+    if (allStudents) {
+      lines.push(<tr key="total">
+        <td colSpan="2">
+          <strong>Total - </strong>
+          <br/>
+          File included {matchedStates}/51 (states + DC)
+        </td>
+        <td>
+          {estStudents.toLocaleString()} <br/>
+          Matched {Math.round(estStudents/allStudents*100)}% of students
+        </td>
+        <td>{sum.toFixed(2)}<br/>Estimated</td>
+      </tr>)
+    }
 
     return lines;
   }
@@ -131,11 +204,50 @@ export default class Estimator extends React.Component {
     return <div className="container">
       <div className="row">
         <div className="col-sm-12">
-          <FileInput
-            onChange={this.fileUploaded.bind(this)}
-            />
+          <h3>Estimate Arriving Cases</h3>
+        </div>
+      </div>
+
+      <hr/>
+
+      <div className="row">
+        <div className="col-sm-4">
+          <h3>Create CSV</h3>
+          It should have this format<br/>
+<code>
+state,students<br/>
+AK,2<br/>
+AL,4<br/>
+AR,3<br/>
+...
+</code>
+        </div>
+        <div className="col-sm-4">
+          <h3>Process File</h3>
+          Drag and drop the CSV file onto this webpage, or
+          choose it here.<br/>
+          It is read locally and not uploaded.
+          <br/>
+          <div style={{border:"1px solid #ccc", padding: 6}}>
+            <FileInput
+              onChange={this.fileUploaded.bind(this)}
+              startLoading={this.startLoading.bind(this)}
+              />
+          </div>
         </div>
 
+        <div className="col-sm-4">
+          {this.state.loading
+            ? <img src={LoadingGif} alt="Loading spinner"/>
+            : <div>
+              <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
+              <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
+              <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
+            </div>}
+        </div>
+      </div>
+
+      <div className="row">
         <div className="col-sm-12">
           <table className="table">
             <thead>

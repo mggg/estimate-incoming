@@ -1,5 +1,7 @@
 import React from 'react';
 
+const d3 = require("d3");
+
 export default class FileInput extends React.Component {
   constructor(props) {
     super(props)
@@ -14,6 +16,7 @@ export default class FileInput extends React.Component {
   handleDrop(ev) {
     ev.preventDefault();
     ev.stopPropagation();
+    this.props.startLoading();
 
     if (ev.dataTransfer.items && ev.dataTransfer.items.length) {
       this.parseFile(ev.dataTransfer.items[0].getAsFile());
@@ -23,6 +26,7 @@ export default class FileInput extends React.Component {
   }
 
   handleUpload(e) {
+    this.props.startLoading();
     this.parseFile(e.target.files[0]);
   }
 
@@ -30,8 +34,12 @@ export default class FileInput extends React.Component {
     let reader = new FileReader();
     reader.onload = (e) => {
         let tblob = e.target.result,
-            rows = tblob.trim().split(/\r\n|\r|\n/)
-        this.props.onChange(rows)
+            rows = d3.csvParseRows(tblob);
+        // trim header
+        if (rows[0][0].toLowerCase().trim() === "state") {
+          rows.splice(0, 1);
+        }
+        this.props.onChange(rows);
     };
     reader.readAsText(file);
   }

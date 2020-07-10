@@ -41,6 +41,17 @@ body {
   min-height: 100vh;
   border: none;
   margin: 0;
-  overflow: hidden;
   padding: 20px;
+}
+.col-sm-4 {
+  text-align: left;
+}
+.table td, .table th {
+  padding: 0.25rem;
+}
+td:first-child {
+  text-transform: capitalize;
+}
+button {
+  margin: 6px;
 }
