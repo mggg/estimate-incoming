@@ -30,8 +30,7 @@ export default class FileInput extends React.Component {
     let reader = new FileReader();
     reader.onload = (e) => {
         let tblob = e.target.result,
-            rows = tblob.split("\n")
-        console.log(rows)
+            rows = tblob.trim().split(/\r\n|\r|\n/)
         this.props.onChange(rows)
     };
     reader.readAsText(file);
