@@ -41,7 +41,24 @@ body {
   min-height: 100vh;
   border: none;
   margin: 0;
-  padding: 20px;
+  padding: 0px;
+}
+
+nav {
+  background-color: #1E578A !important;
+  color: #fff;
+  padding-top: 15px;
+  margin-bottom: 15px;
+}
+.qSection {
+  width: 70%;
+  margin-left: 15%;
+}
+#separator {
+  border: 1px solid skyblue;
+  border-radius: 5px;
+  margin-top: 3em;
+  margin-bottom: 3em;
 }
 .col-sm-4 {
   text-align: left;

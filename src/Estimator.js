@@ -165,6 +165,8 @@ export default class Estimator extends React.Component {
       states = states.sort((a, b) => b[2] - a[2])
     } else if (this.state.sortMode === 2) {
       states = states.sort((a, b) => b[2] * b[1] - a[2] * a[1])
+    } else if (this.state.sortMode === 0) {
+      states = states.sort()
     }
 
     states.forEach((state, i) => {
@@ -202,66 +204,82 @@ export default class Estimator extends React.Component {
 
   render() {
     return <div className="container">
-      <div className="row">
-        <div className="col-sm-12">
-          <h3>Estimate Arriving Cases</h3>
+      <div className="col-sm-12">
+        <div style={{textAlign:"center"}}>
+          <nav className="navbar navbar-dark bg-primary">
+            <h2>Estimate Arriving Cases</h2>
+          </nav>
+          <section className="qSection">
+            <p style={{textAlign: 'left', padding: '10px'}}>
+              <strong>This is a calculator to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong> We use data from Dr. Abraham Flaxman at the University of Washington that estimates the number of daily infections in each state, along with university-specific data on where students are coming from. Our intention is to help universities start planning their testing rollout as quickly and as accurately as possible. This calculator is a project of the MGGG Redistricting Lab
+              (<a href="https://mggg.org" target="_blank">mggg.org</a>)
+              at Tisch College of Tufts University.  For information, contact&nbsp;
+              <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
+            </p>
+            <p style={{textAlign: 'left', padding: '10px'}}>
+              <strong>How to use this calculator:</strong>&nbsp;
+              Upload a .csv file (formatted as below) that contains the number of students from each state, and the calculator will handle the rest.
+            </p>
+          </section>
         </div>
-      </div>
+        
+        <hr id="separator"/>
 
-      <hr/>
+        <div className="row">
+          <div className="col-sm-3">
+            <h3>Create CSV</h3>
+            It should have this format<br/>
+              <code>
+              state,students<br/>
+              AK,2<br/>
+              AL,4<br/>
+              AR,3<br/>
+              ...
+              </code>
+          </div>
+          <div className="col-sm-6">
+            <h3>Process File</h3>
+            Drag and drop the CSV file onto this webpage, or
+            choose it here.<br/>
+            It is read locally and not uploaded.
+            <br/>
+            <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
+              <FileInput
+                onChange={this.fileUploaded.bind(this)}
+                startLoading={this.startLoading.bind(this)}
+                />
+            </div>
+          </div>
 
-      <div className="row">
-        <div className="col-sm-4">
-          <h3>Create CSV</h3>
-          It should have this format<br/>
-<code>
-state,students<br/>
-AK,2<br/>
-AL,4<br/>
-AR,3<br/>
-...
-</code>
-        </div>
-        <div className="col-sm-4">
-          <h3>Process File</h3>
-          Drag and drop the CSV file onto this webpage, or
-          choose it here.<br/>
-          It is read locally and not uploaded.
-          <br/>
-          <div style={{border:"1px solid #ccc", padding: 6}}>
-            <FileInput
-              onChange={this.fileUploaded.bind(this)}
-              startLoading={this.startLoading.bind(this)}
-              />
+          <div className="col-sm-3">
+            {this.state.loading
+              ? <img src={LoadingGif} alt="Loading spinner"/>
+              : <div>
+                <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
+                <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
+                <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
+              </div>}
           </div>
         </div>
 
-        <div className="col-sm-4">
-          {this.state.loading
-            ? <img src={LoadingGif} alt="Loading spinner"/>
-            : <div>
-              <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
-              <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
-              <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
-            </div>}
-        </div>
-      </div>
+        <hr id="separator"/>
 
-      <div className="row">
-        <div className="col-sm-12">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>State</th>
-                <th>Positive Rate</th>
-                <th>Arriving Students</th>
-                <th>Positives</th>
-              </tr>
-            </thead>
-            <tbody>
-              {this.approxPositiveStudents()}
-            </tbody>
-          </table>
+        <div className="row">
+          <div className="col-sm-12">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>State</th>
+                  <th>Positive Rate</th>
+                  <th>Arriving Students</th>
+                  <th>Positives</th>
+                </tr>
+              </thead>
+              <tbody>
+                {this.approxPositiveStudents()}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
