@@ -36,7 +36,7 @@ export default class FileInput extends React.Component {
         let tblob = e.target.result,
             rows = d3.csvParseRows(tblob);
         // trim header
-        if (rows[0][0].toLowerCase().trim() === "state") {
+        if (rows[0][0].toLowerCase().trim() === 'state' && rows[0][1].toLowerCase().trim() === 'students') {
           rows.splice(0, 1);
         }
         this.props.onChange(rows);

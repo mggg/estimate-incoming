@@ -4,6 +4,17 @@ import DataFrame from "dataframe-js";
 import FileInput from './fileinput';
 import LoadingGif from './loading.gif';
 
+const DownloadButton = props => {
+  const downloadFile = () => {
+    window.location.href = "/estimate-incoming/template.csv"
+  }
+  return (
+            <button className="btn btn-info" onClick={downloadFile}>
+              Download Template
+            </button>
+  )
+}
+
 const d3 = require("d3");
 const postalCodeToName = {
   al: "Alabama",
@@ -86,7 +97,8 @@ export default class Estimator extends React.Component {
     this.state = {
       uniStats: [],
       loading: true,
-      sortMode: 0
+      sortMode: 0,
+      uploadError: false
     }
   }
 
@@ -115,9 +127,14 @@ export default class Estimator extends React.Component {
   }
 
   fileUploaded(rows) {
+    if (isNaN(rows[0][1] * 1)) {
+      this.setState({
+        uploadError: true,
+      })
+    }
     let states = rows.map((r) => [lowerState(r[0]), 1 * r[1]]),
         days = [];
-    for (var i = 5; i<22; i++) {
+    for (var i = 3; i<22; i++) {
       var date = new Date();
       date.setDate(date.getDate() - i);
       let dateString = parsedDate(date);
@@ -126,18 +143,33 @@ export default class Estimator extends React.Component {
 
     // input: [ [name, students] ]
 
+    let totalPop = 0;
+    let totalPositives = 0;
+
     states.forEach(state => {
-      let ourState = df.filter({'location_name':state[0]});
-      let popState = ourState.stat.mean('location_population');
-      let data = ourState.filter({'date_reported':days[0]});
-      for (var i = 1; i < days.length; i++) {
-        data = data.union(ourState.filter({'date_reported':days[i]}))
+      if (state[0] === 'international') {
+        return
+      } else {
+        let ourState = df.filter({'location_name':state[0]});
+        let popState = ourState.stat.mean('location_population');
+        totalPop += popState;
+        let data = ourState.filter({'date_reported':days[0]});
+        for (var i = 1; i < days.length; i++) {
+          data = data.union(ourState.filter({'date_reported':days[i]}))
+        }
+        let pastInfections = data;
+        let currentPositives = pastInfections.stat.sum('mean_infections');
+        totalPositives += currentPositives;
+        let probPositive = currentPositives / popState;
+        state.push(probPositive);
       }
-      let pastInfections = data;
-      let currentPositives = pastInfections.stat.sum('mean_infections');
-      let probPositive = currentPositives / popState;
-      state.push(probPositive);
     });
+
+    states.forEach(state => {
+      if (state[0] === 'international') {
+        state.push(totalPositives/totalPop);
+      }
+    })
 
     // output: [[ name, students, fraction_prob_positive ]]
 
@@ -185,17 +217,17 @@ export default class Estimator extends React.Component {
     })
 
     if (allStudents) {
-      lines.push(<tr key="total">
+      lines.push(<tr key="total" id="total">
         <td colSpan="2">
-          <strong>Total - </strong>
+          <strong>Total</strong>
           <br/>
-          File included {matchedStates}/51 (states + DC)
+          File included {matchedStates}/52 (states + DC + International)
         </td>
         <td>
-          {estStudents.toLocaleString()} <br/>
+          <strong>{estStudents.toLocaleString()}</strong> <br/>
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
-        <td>{sum.toFixed(2)}<br/>Estimated</td>
+        <td><strong>{sum.toFixed(2)}</strong><br/>Estimated COVID-positive</td>
       </tr>)
     }
 
@@ -207,7 +239,7 @@ export default class Estimator extends React.Component {
       <div className="col-sm-12">
         <div style={{textAlign:"center"}}>
           <nav className="navbar navbar-dark bg-primary">
-            <h2>Estimate Arriving Cases</h2>
+            <h2>Estimate Incoming Cases</h2>
           </nav>
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
@@ -226,23 +258,22 @@ export default class Estimator extends React.Component {
         <hr id="separator"/>
 
         <div className="row">
-          <div className="col-sm-3">
+          <div className="col-sm-6">
             <h3>Create CSV</h3>
-            It should have this format<br/>
+            <DownloadButton /><br/>
+            It should have this format:<br/>
               <code>
               state,students<br/>
+              international,20<br/>
               AK,2<br/>
               AL,4<br/>
-              AR,3<br/>
               ...
               </code>
           </div>
           <div className="col-sm-6">
             <h3>Process File</h3>
-            Drag and drop the CSV file onto this webpage, or
-            choose it here.<br/>
-            It is read locally and not uploaded.
-            <br/>
+            After editing the template, upload or drag and drop it onto this page.<br/>
+            It is read locally and not uploaded.<br/>
             <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
               <FileInput
                 onChange={this.fileUploaded.bind(this)}
@@ -250,35 +281,40 @@ export default class Estimator extends React.Component {
                 />
             </div>
           </div>
-
-          <div className="col-sm-3">
-            {this.state.loading
-              ? <img src={LoadingGif} alt="Loading spinner"/>
-              : <div>
-                <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
-                <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
-                <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
-              </div>}
-          </div>
         </div>
-
-        <hr id="separator"/>
+        <hr/>
+        <div className="col-sm-12">
+          {this.state.uploadError
+          ? <p>Your file is formatted incorrectly.</p>
+          : this.state.loading
+            ? <img src={LoadingGif} alt="Loading spinner"/>
+            : <div>
+              <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
+              <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
+              <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
+            </div>}
+        </div>
 
         <div className="row">
           <div className="col-sm-12">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>State</th>
-                  <th>Estimated Positive Rate</th>
-                  <th>Arriving Students</th>
-                  <th>Estimated Positives</th>
-                </tr>
-              </thead>
-              <tbody>
-                {this.approxPositiveStudents()}
-              </tbody>
-            </table>
+            {this.state.uploadError
+            ? <p/>
+            : this.state.loading
+              ? <p/>
+              : <table className="table">
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th>Estimated Positive Rate</th>
+                      <th>Arriving Students</th>
+                      <th>Estimated Positives</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.approxPositiveStudents()}
+                  </tbody>
+                </table>
+              }
           </div>
         </div>
       </div>
