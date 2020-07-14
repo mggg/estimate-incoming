@@ -3,6 +3,8 @@ import DataFrame from "dataframe-js";
 
 import FileInput from './fileinput';
 import LoadingGif from './loading.gif';
+// import unzipper from './unzipper';
+// import http from 'http';
 
 const DownloadButton = props => {
   const downloadFile = () => {
@@ -12,6 +14,15 @@ const DownloadButton = props => {
             <button className="btn btn-info" onClick={downloadFile}>
               Download Template
             </button>
+  )
+}
+
+const RefreshButton = props => {
+  return (
+    <button className='btn btn-info'
+            onClick={() => window.location.reload()}>
+      Start Over
+    </button>
   )
 }
 
@@ -221,7 +232,7 @@ export default class Estimator extends React.Component {
         <td colSpan="2">
           <strong>Total</strong>
           <br/>
-          File included {matchedStates}/52 (states + DC + International)
+          File included {matchedStates}/53 regions
         </td>
         <td>
           <strong>{estStudents.toLocaleString()}</strong> <br/>
@@ -250,7 +261,7 @@ export default class Estimator extends React.Component {
             </p>
             <p style={{textAlign: 'left', padding: '10px'}}>
               <strong>How to use this calculator:</strong>&nbsp;
-              Upload a .csv file (formatted as below) that contains the number of students from each state, and the calculator will handle the rest.
+              Upload a CSV file (formatted as below) that contains the number of students from each state, and the calculator will handle the rest.
             </p>
           </section>
         </div>
@@ -285,7 +296,10 @@ export default class Estimator extends React.Component {
         <hr/>
         <div className="col-sm-12">
           {this.state.uploadError
-          ? <p>Your file is formatted incorrectly.</p>
+          ? <div>
+              <p>Your file was formatted incorrectly.</p>
+              <RefreshButton />
+            </div>
           : this.state.loading
             ? <img src={LoadingGif} alt="Loading spinner"/>
             : <div>
