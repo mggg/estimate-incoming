@@ -115,7 +115,7 @@ export default class Estimator extends React.Component {
 
   componentDidMount() {
     d3.csv('/estimate-incoming/latestData.csv').then(rows => {
-      console.log(rows);
+      // console.log(rows);
       rows.forEach(r => r.location_name = r.location_name.toLowerCase())
       df = new DataFrame(rows, [
         "date_reported","location_name", "mean_infections", "location_population"]);
@@ -160,7 +160,9 @@ export default class Estimator extends React.Component {
       } else {
         let ourState = df.filter({'location_name':state[0]});
         let popState = ourState.stat.mean('location_population');
-        totalPop += popState;
+        if (!isNaN(popState)) {
+          totalPop += popState;
+        }
         let data = ourState.filter({'date_reported':days[0]});
         for (var i = 1; i < days.length; i++) {
           data = data.union(ourState.filter({'date_reported':days[i]}))
