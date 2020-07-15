@@ -254,7 +254,7 @@ export default class Estimator extends React.Component {
           </nav>
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
-              <strong>This is a calculator to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong> We use data from Dr. Abraham Flaxman and the <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> that estimates the number of daily infections in each state, along with university-specific data on where students are coming from. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
+              <strong>This is a calculator to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong> We use data<sup>*</sup> from Dr. Abraham Flaxman and the <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> that estimates the number of daily infections in each state, along with university-specific data on where students are coming from. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
               (<a href="https://mggg.org" target="_blank">mggg.org</a>)
               at Tisch College of Tufts University.  For information, contact&nbsp;
               <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
@@ -332,6 +332,7 @@ export default class Estimator extends React.Component {
           </div>
         </div>
       </div>
+      <p><sup>*</sup> Data from New Hampshire is currently unavailable.</p>
     </div>
   }
 }
