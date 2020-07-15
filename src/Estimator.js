@@ -114,15 +114,11 @@ export default class Estimator extends React.Component {
   }
 
   componentDidMount() {
-    d3.csv('/estimate-incoming/infections_data.csv').then(rows => {
-      // console.log(rows);
-      rows.forEach(r => r.location_name = r.location_name.toLowerCase().replace("georgia_two", "georgia"))
+    d3.csv('/estimate-incoming/latestData.csv').then(rows => {
+      console.log(rows);
+      rows.forEach(r => r.location_name = r.location_name.toLowerCase())
       df = new DataFrame(rows, [
-        "date_reported","location_name","location_population","mean_admis","mean_deaths",
-        "mean_infections","upper_admis","upper_deaths","upper_infections","lower_admis",
-        "lower_deaths","lower_infections","cum_deaths","seroprevalence_mean",
-        "seroprevalence_upper","seroprevalence_lower","admis_mean_per_cap","admis_upper_per_cap",
-        "admis_lower_per_cap","deaths_mean_per_cap","deaths_upper_per_cap","deaths_lower_per_cap"]);
+        "date_reported","location_name", "mean_infections", "location_population"]);
       // infections_data.show(3);
 
       fetch("/estimate-incoming/students.csv").then(res => res.text()).then(data => {
