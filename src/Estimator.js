@@ -138,10 +138,11 @@ export default class Estimator extends React.Component {
   }
 
   fileUploaded(rows) {
-    if (isNaN(rows[0][1] * 1)) {
+    if (isNaN(rows[0][1] * 1) || rows[0].length !== 2) {
       this.setState({
         uploadError: true,
       })
+      return;
     }
     let states = rows.map((r) => [lowerState(r[0]), 1 * r[1]]),
         days = [];
@@ -186,6 +187,7 @@ export default class Estimator extends React.Component {
 
     this.setState({
       uniStats: states,
+      uploadError: false,
       loading: false
     })
   }
