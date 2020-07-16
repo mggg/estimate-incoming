@@ -3,8 +3,6 @@ import DataFrame from "dataframe-js";
 
 import FileInput from './fileinput';
 import LoadingGif from './loading.gif';
-// import unzipper from './unzipper';
-// import http from 'http';
 
 const DownloadButton = props => {
   const downloadFile = () => {
@@ -83,7 +81,8 @@ const postalCodeToName = {
   wy: "Wyoming"
 };
 
-let df = null;
+let ihme_df = null;
+let mit_df = null;
 
 function lowerState(txt) {
   txt = txt.trim();
@@ -93,13 +92,6 @@ function lowerState(txt) {
   return txt.toLowerCase();
 }
 
-function parsedDate(date) {
-  let dd = String(date.getDate()).padStart(2, '0'),
-      mm = String(date.getMonth() + 1).padStart(2, '0'),
-      yyyy = date.getFullYear(),
-      str = yyyy + '-' + mm + '-' + dd;
-  return str;
-};
 
 export default class Estimator extends React.Component {
   constructor(props) {
@@ -109,23 +101,28 @@ export default class Estimator extends React.Component {
       uniStats: [],
       loading: true,
       sortMode: 0,
-      uploadError: false
+      uploadError: false,
+      useIHME: true
     }
   }
 
   componentDidMount() {
-    d3.csv('/estimate-incoming/latestData.csv').then(rows => {
-      // console.log(rows);
+    d3.csv('/estimate-incoming/IHME_pcts.csv').then(rows => {
       rows.forEach(r => r.location_name = r.location_name.toLowerCase())
-      df = new DataFrame(rows, [
-        "date_reported","location_name", "mean_infections", "location_population"]);
-      // infections_data.show(3);
+      ihme_df = new DataFrame(rows, [
+        "location_name","lower_prob", "mean_prob", "upper_prob"]);
+
+    d3.csv('/estimate-incoming/MIT_pcts.csv').then(rows => {
+      rows.forEach(r => r.location_name = r.location_name.toLowerCase())
+      mit_df = new DataFrame(rows, [
+        "location_name","lower_prob", "mean_prob", "upper_prob"]);
+    });
 
       fetch("/estimate-incoming/students.csv").then(res => res.text()).then(data => {
-        let rows = d3.csvParseRows(data);
-        rows.splice(0, 1);
-        this.fileUploaded(rows);
-      });
+          let rows = d3.csvParseRows(data);
+          rows.splice(0, 1);
+          this.fileUploaded(rows);
+        });
     });
   }
 
@@ -140,48 +137,27 @@ export default class Estimator extends React.Component {
       })
       return;
     }
-    let states = rows.map((r) => [lowerState(r[0]), 1 * r[1]]),
-        days = [];
-    for (var i = 3; i<22; i++) {
-      var date = new Date();
-      date.setDate(date.getDate() - i);
-      let dateString = parsedDate(date);
-      days.push(dateString);
-    }
-
-    // input: [ [name, students] ]
-
-    let totalPop = 0;
-    let totalPositives = 0;
-
+    let states = rows.map((r) => [lowerState(r[0]), 1 * r[1]]);
     states.forEach(state => {
-      if (state[0] === 'international') {
-        return
-      } else {
-        let ourState = df.filter({'location_name':state[0]});
-        let popState = ourState.stat.mean('location_population');
-        if (!isNaN(popState)) {
-          totalPop += popState;
-        }
-        let data = ourState.filter({'date_reported':days[0]});
-        for (var i = 1; i < days.length; i++) {
-          data = data.union(ourState.filter({'date_reported':days[i]}))
-        }
-        let pastInfections = data;
-        let currentPositives = pastInfections.stat.sum('mean_infections');
-        totalPositives += currentPositives;
-        let probPositive = currentPositives / popState;
-        state.push(probPositive);
-      }
-    });
+      let ihme_state_df = ihme_df.filter({'location_name':state[0]}),
+          ihme_lower_prob = ihme_state_df.stat.mean('lower_prob'),
+          ihme_mean_prob = ihme_state_df.stat.mean('mean_prob'),
+          ihme_upper_prob = ihme_state_df.stat.mean('upper_prob');
+      state.push(ihme_lower_prob);
+      state.push(ihme_mean_prob);
+      state.push(ihme_upper_prob);
 
-    states.forEach(state => {
-      if (state[0] === 'international') {
-        state.push(totalPositives/totalPop);
-      }
+      let mit_state_df = mit_df.filter({'location_name':state[0]}),
+          mit_lower_prob = mit_state_df.stat.mean('lower_prob'),
+          mit_mean_prob = mit_state_df.stat.mean('mean_prob'),
+          mit_upper_prob = mit_state_df.stat.mean('upper_prob');
+      state.push(mit_lower_prob);
+      state.push(mit_mean_prob);
+      state.push(mit_upper_prob);
     })
 
-    // output: [[ name, students, fraction_prob_positive ]]
+    // input: [ [name, students, ihme_lower_prob, ihme_mean_prob, ihme_upper_prob, mit_lower_prob, mit_mean_prob, mit_upper_prob] ]
+
 
     this.setState({
       uniStats: states,
@@ -194,9 +170,11 @@ export default class Estimator extends React.Component {
     this.setState({ sortMode: sortMode })
   }
 
-  approxPositiveStudents() {
+  approxPositiveStudents(j) {
     let states = this.state.uniStats,
         sum = 0,
+        lowerSum = 0,
+        upperSum = 0,
         allStudents = 0,
         estStudents = 0,
         matchedStates = 0,
@@ -205,9 +183,9 @@ export default class Estimator extends React.Component {
     // default sort is A-Z
     if (this.state.sortMode === 1) {
       // sort by positivity
-      states = states.sort((a, b) => b[2] - a[2])
+      states = states.sort((a, b) => b[j] - a[j])
     } else if (this.state.sortMode === 2) {
-      states = states.sort((a, b) => b[2] * b[1] - a[2] * a[1])
+      states = states.sort((a, b) => b[j] * b[1] - a[j] * a[1])
     } else if (this.state.sortMode === 0) {
       states = states.sort()
     }
@@ -215,14 +193,16 @@ export default class Estimator extends React.Component {
     states.forEach((state, i) => {
       lines.push(<tr key={i}>
         <td>{state[0]}</td>
-        <td>{(state[2]*100).toFixed(2)}%</td>
+        <td>{(state[j]*100).toFixed(2)}%</td>
         <td>{state[1].toLocaleString()}</td>
-        <td>{(state[1] * state[2]).toFixed(2)}</td>
+        <td>{(state[1] * state[j]).toFixed(2)}</td>
       </tr>)
       allStudents += state[1] * 1;
-      if (!isNaN(state[2])) {
+      if (!isNaN(state[j])) {
         estStudents += state[1] * 1;
-        sum += state[1] * state[2];
+        sum += state[1] * state[j];
+        lowerSum += state[1] * state[j-1];
+        upperSum += state[1] * state[j+1];
         matchedStates++;
       }
     })
@@ -238,7 +218,7 @@ export default class Estimator extends React.Component {
           <strong>{estStudents.toLocaleString()}</strong> <br/>
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
-        <td><strong>{sum.toFixed(2)}</strong><br/>Estimated COVID-positive</td>
+        <td>{lowerSum.toFixed(2)} - <strong>{sum.toFixed(2)}</strong> - {upperSum.toFixed(2)}<br/>Estimated COVID-positive</td>
       </tr>)
     }
 
@@ -254,14 +234,14 @@ export default class Estimator extends React.Component {
           </nav>
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
-              <strong>This is a calculator to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong> We use data<sup>*</sup> from Dr. Abraham Flaxman and the <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> that estimates the number of daily infections in each state, along with university-specific data on where students are coming from. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
+              <strong>This is a calculator to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong> We use data from the University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and from MIT's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which use deaths data to estimate the true number of active infections in each state. Dividing active infections by a state population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
               (<a href="https://mggg.org" target="_blank">mggg.org</a>)
               at Tisch College of Tufts University.  For information, contact&nbsp;
               <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
             </p>
             <p style={{textAlign: 'left', padding: '10px'}}>
               <strong>How to use this calculator:</strong>&nbsp;
-              Upload a CSV file (formatted as below) that contains the number of students from each state, and the calculator will handle the rest.
+              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, scroll to the bottom to find the total estimated number of COVID-19 positive students (by default, the calculator populates using incomplete data from Tufts University).
             </p>
           </section>
         </div>
@@ -303,6 +283,18 @@ export default class Estimator extends React.Component {
           : this.state.loading
             ? <img src={LoadingGif} alt="Loading spinner"/>
             : <div>
+                <div>
+                  <button className="btn btn-info" onClick={() => this.setState({
+                    useIHME: true
+                  })}>
+                  Use IHME Data
+                  </button>
+                  <button className="btn btn-info" onClick={() => this.setState({
+                    useIHME: false
+                  })}>
+                  Use MIT Data
+                  </button>
+                </div>
               <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
               <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
               <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
@@ -325,14 +317,16 @@ export default class Estimator extends React.Component {
                     </tr>
                   </thead>
                   <tbody>
-                    {this.approxPositiveStudents()}
+                    {this.state.useIHME
+                      ? this.approxPositiveStudents(3)
+                      : this.approxPositiveStudents(6)}
                   </tbody>
                 </table>
               }
           </div>
         </div>
       </div>
-      <p><sup>*</sup> Data from New Hampshire is currently unavailable.</p>
+      <p><sup>*</sup> IHME Data from New Hampshire is currently unavailable.</p>
     </div>
   }
 }
