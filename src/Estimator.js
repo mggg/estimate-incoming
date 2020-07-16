@@ -190,6 +190,14 @@ export default class Estimator extends React.Component {
       states = states.sort()
     }
 
+    lines.push(
+      <tr key="header">
+          <th>State</th>
+          <th>Estimated Positive Rate</th>
+          <th>Arriving Students</th>
+          <th>Estimated Positives</th>
+        </tr>);
+
     states.forEach((state, i) => {
       lines.push(<tr key={i}>
         <td>{state[0]}</td>
@@ -208,18 +216,22 @@ export default class Estimator extends React.Component {
     })
 
     if (allStudents) {
-      lines.push(<tr key="total" id="total">
+      lines.unshift(
+        <thead>
+        <tr key="total" id="total">
         <td colSpan="2">
-          <strong>Total</strong>
-          <br/>
-          File included {matchedStates}/53 regions
+          <strong><h3>Total</h3></strong>
+          File included {matchedStates}/53 regions<br/>
+          (50 U.S. States + PR + D.C. + International)
         </td>
         <td>
-          <strong>{estStudents.toLocaleString()}</strong> <br/>
+          <strong><h3>{estStudents.toLocaleString()}</h3></strong>
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
-        <td>{lowerSum.toFixed(2)} - <strong>{sum.toFixed(2)}</strong> - {upperSum.toFixed(2)}<br/>Estimated COVID-positive</td>
-      </tr>)
+        <td><strong><h3>{sum.toFixed(2)}</h3>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Est. COVID+ today<br/>(95% confidence interval)</td>
+      </tr>
+
+      </thead>)
     }
 
     return lines;
@@ -234,25 +246,20 @@ export default class Estimator extends React.Component {
           </nav>
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
-              <strong>This is a calculator to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong> We use data from the University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and from MIT's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which use deaths data to estimate the true number of active infections in each state. Dividing active infections by a state population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
-              (<a href="https://mggg.org" target="_blank">mggg.org</a>)
-              at Tisch College of Tufts University.  For information, contact&nbsp;
-              <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
-            </p>
-            <p style={{textAlign: 'left', padding: '10px'}}>
-              <strong>How to use this calculator:</strong>&nbsp;
-              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, scroll to the bottom to find the total estimated number of COVID-19 positive students (by default, the calculator populates using incomplete data from Tufts University).
+              <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong><br/><br/>
+              <strong>How to use the calculator:</strong>&nbsp;
+              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of COVID-19 positive students, accompanied by a 95% confidence interval and a state-by-state breakdown below. By default, the calculator is populated with partial data from Tufts University.
             </p>
           </section>
         </div>
 
         <hr id="separator"/>
-
+        <h2>Input your states of origin data</h2><br/>
         <div className="row">
           <div className="col-sm-6">
             <h3>Create CSV</h3>
             <DownloadButton /><br/>
-            It should have this format:<br/>
+            It should have this raw format...<br/>
               <code>
               state,students<br/>
               international,20<br/>
@@ -263,8 +270,7 @@ export default class Estimator extends React.Component {
           </div>
           <div className="col-sm-6">
             <h3>Process File</h3>
-            After editing the template, upload or drag and drop it onto this page.<br/>
-            It is read locally and not uploaded.<br/>
+            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private.<br/>
             <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
               <FileInput
                 onChange={this.fileUploaded.bind(this)}
@@ -308,25 +314,25 @@ export default class Estimator extends React.Component {
             : this.state.loading
               ? <p/>
               : <table className="table">
-                  <thead>
-                    <tr>
-                      <th>State</th>
-                      <th>Estimated Positive Rate</th>
-                      <th>Arriving Students</th>
-                      <th>Estimated Positives</th>
-                    </tr>
-                  </thead>
-                  <tbody>
                     {this.state.useIHME
                       ? this.approxPositiveStudents(3)
                       : this.approxPositiveStudents(6)}
-                  </tbody>
                 </table>
               }
           </div>
         </div>
       </div>
-      <p><sup>*</sup> IHME Data from New Hampshire is currently unavailable.</p>
+      <hr id="separator"/>
+      <section className="qSection">
+        <h2>About the data</h2>
+        <p style={{textAlign: 'left', padding: '10px'}}>
+          We use two different models: University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which estimate the true number of active infections in each state. Read more about each model's assumptions  <a href="http://www.healthdata.org/covid/faqs" target="_blank">here</a> (IHME) and  <a href="https://covid19-projections.com/about/#about-the-model" target="_blank">here</a> (YYG). Dividing the number of active infections by a state's population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
+          (<a href="https://mggg.org" target="_blank">mggg.org</a>)
+          at Tisch College of Tufts University.  For information, contact&nbsp;
+          <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
+        </p>
+        <p><sup>*</sup> IHME Data from New Hampshire is currently unavailable.</p>
+      </section>
     </div>
   }
 }

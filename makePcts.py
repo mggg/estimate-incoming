@@ -120,6 +120,17 @@ def getIHME():
     result.to_csv("./public/IHME_pcts.csv", index=False)
     return
 
+def sh(script, msg=0):
+    os.system("zsh -c '%s'" % script)
+
 if __name__=="__main__":
-    getIHME()
-    getMIT()
+    try:
+        getIHME()
+        sh('echo "got IHME data"')
+    except:
+        sh('echo "error getting IHME data"')
+    try:
+        getMIT()
+        sh('echo "got MIT data"')
+    except:
+        sh('echo "error getting MIT data"')
