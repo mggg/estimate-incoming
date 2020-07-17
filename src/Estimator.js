@@ -19,7 +19,7 @@ const RefreshButton = props => {
   return (
     <button className='btn btn-info'
             onClick={() => window.location.reload()}>
-      Start Over
+      Refresh Page
     </button>
   )
 }
@@ -112,17 +112,17 @@ export default class Estimator extends React.Component {
       ihme_df = new DataFrame(rows, [
         "location_name","lower_prob", "mean_prob", "upper_prob"]);
 
-    d3.csv('/estimate-incoming/MIT_pcts.csv').then(rows => {
-      rows.forEach(r => r.location_name = r.location_name.toLowerCase())
-      mit_df = new DataFrame(rows, [
-        "location_name","lower_prob", "mean_prob", "upper_prob"]);
-    });
-
-      fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
-          let rows = d3.csvParseRows(data);
-          rows.splice(0, 1);
-          this.fileUploaded(rows);
-        });
+      d3.csv('/estimate-incoming/MIT_pcts.csv').then(rows => {
+        rows.forEach(r => r.location_name = r.location_name.toLowerCase())
+        mit_df = new DataFrame(rows, [
+          "location_name","lower_prob", "mean_prob", "upper_prob"]);
+        // do this 2nd
+        fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
+            let rows = d3.csvParseRows(data);
+            rows.splice(0, 1);
+            this.fileUploaded(rows);
+          });
+      });
     });
   }
 
@@ -283,11 +283,15 @@ export default class Estimator extends React.Component {
         <div className="col-sm-12">
           {this.state.uploadError
           ? <div>
-              <p>Your file was formatted incorrectly.</p>
+              <p>Your file was formatted incorrectly. Please check to make sure the top row of the file has two cells: 'state' and 'students', your left column only contain state abbrevations (capitalized) and perhaps 'international', and your right column contains only numbers. And remember to save it as a .CSV file! If you are still having trouble, feel free to email <a href="mailto:gabe.schoenbach@gmail.com">gabe.schoenbach@gmail.com</a> for help.</p>
               <RefreshButton />
             </div>
           : this.state.loading
-            ? <img src={LoadingGif} alt="Loading spinner"/>
+            ? <div>
+                <img src={LoadingGif} alt="Loading spinner"/>
+                <p>If the spinner doesn't disappear within 5s, please refresh the page.</p>
+                <RefreshButton />
+              </div>
             : <div>
                 <div>
                   <button className="btn btn-info" onClick={() => this.setState({
@@ -298,7 +302,7 @@ export default class Estimator extends React.Component {
                   <button className="btn btn-info" onClick={() => this.setState({
                     useIHME: false
                   })}>
-                  Use MIT Data
+                  Use YYG Data
                   </button>
                 </div>
               <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
