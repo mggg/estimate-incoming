@@ -118,7 +118,7 @@ export default class Estimator extends React.Component {
         "location_name","lower_prob", "mean_prob", "upper_prob"]);
     });
 
-      fetch("/estimate-incoming/students.csv").then(res => res.text()).then(data => {
+      fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
           let rows = d3.csvParseRows(data);
           rows.splice(0, 1);
           this.fileUploaded(rows);
@@ -248,7 +248,7 @@ export default class Estimator extends React.Component {
             <p style={{textAlign: 'left', padding: '10px'}}>
               <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong><br/><br/>
               <strong>How to use the calculator:</strong>&nbsp;
-              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of COVID-19 positive students, accompanied by a 95% confidence interval and a state-by-state breakdown below. By default, the calculator is populated with partial data from Tufts University.
+              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of COVID-19 positive students today, accompanied by a 95% confidence interval and a state-by-state breakdown below. By default, the calculator is populated with partial data from Tufts University.
             </p>
           </section>
         </div>
@@ -326,7 +326,7 @@ export default class Estimator extends React.Component {
       <section className="qSection">
         <h2>About the data</h2>
         <p style={{textAlign: 'left', padding: '10px'}}>
-          We use two different models: University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which estimate the true number of active infections in each state. Read more about each model's assumptions  <a href="http://www.healthdata.org/covid/faqs" target="_blank">here</a> (IHME) and  <a href="https://covid19-projections.com/about/#about-the-model" target="_blank">here</a> (YYG). Dividing the number of active infections by a state's population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
+          We use two different models: University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which estimate the true number of active infections in each state today. Read more about each model's assumptions  <a href="http://www.healthdata.org/covid/faqs" target="_blank">here</a> (IHME) and  <a href="https://covid19-projections.com/about/#about-the-model" target="_blank">here</a> (YYG). Dividing the number of active infections by a state's population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
           (<a href="https://mggg.org" target="_blank">mggg.org</a>)
           at Tisch College of Tufts University.  For information, contact&nbsp;
           <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
