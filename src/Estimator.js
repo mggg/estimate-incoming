@@ -9,7 +9,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 
 const DownloadButton = props => {
   const downloadFile = () => {
-    window.location.href = window.location.pathname + "/template.csv"
+    window.location.href = "./template.csv"
   }
   return (
             <button className="btn btn-info" onClick={downloadFile}>
