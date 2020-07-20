@@ -256,16 +256,13 @@ export default class Estimator extends React.Component {
   }
 
   format() {
-    let ret = [
-      ["state", "est_positive_rate", "students", "est_positives"]
-    ];
-    let states = this.state.uniStats;
-    states.forEach(row => {
-      // console.log(row);
-      ret.push([row[0], row[3], row[1], row[3] * row[1]]);
+    let ret = [['state', 'num_students', 'ihme_lower_prob', 'ihme_mean_prob', 'ihme_upper_prob', 'ihme_lower_prob_sept', 'ihme_mean_prob_sept', 'ihme_upper_prob_sept', 'mit_lower_prob', 'mit_mean_prob', 'mit_upper_prob', 'mit_lower_prob_sept', 'mit_mean_prob_sept', 'mit_upper_prob_sept']];
+    let stats = this.state.uniStats;
+    stats.forEach(row => {
+      ret.push(row);
     });
-    // console.log(ret);
-    return ret
+    console.log(ret);
+    return ret;
   }
 
   render() {
@@ -325,11 +322,6 @@ export default class Estimator extends React.Component {
               </div>
             : <div>
                 <div>
-                  <CSVLink data={this.format()}>
-                    Download CSV
-                  </CSVLink>
-                </div>
-                <div>
                   <button className="btn btn-info" onClick={() => this.setState({
                     useSept: true
                   })}>
@@ -385,11 +377,18 @@ export default class Estimator extends React.Component {
                       return this.approxPositiveStudents(9)
                     };
                   })()
-                };
+                }
                 </table>
               }
           </div>
         </div>
+      </div>
+      <div>
+        <CSVLink data={this.format()}
+                 className="btn btn-info"
+                 filename="estimates.csv">
+          Download CSV
+        </CSVLink>
       </div>
       <hr id="separator"/>
       <section className="qSection">
