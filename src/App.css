@@ -58,11 +58,22 @@ nav {
   width: 70%;
   margin-left: 15%;
 }
+
+.floated {
+  display: inline-block;
+  margin-right:5px;
+}
+
 #separator {
   border: 1px solid skyblue;
   border-radius: 5px;
   margin-top: 1em;
   margin-bottom: 1em;
+}
+
+#dropdown {
+  background-color: #12a3b8;
+  border: 0px;
 }
 .col-sm-4 {
   text-align: left;

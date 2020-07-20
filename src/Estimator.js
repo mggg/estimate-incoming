@@ -4,10 +4,12 @@ import DataFrame from "dataframe-js";
 import FileInput from './fileinput';
 import LoadingGif from './loading.gif';
 import {CSVLink} from "react-csv";
+import DropdownButton from 'react-bootstrap/DropdownButton';
+import Dropdown from 'react-bootstrap/Dropdown';
 
 const DownloadButton = props => {
   const downloadFile = () => {
-    window.location.href = "/estimate-incoming/template.csv"
+    window.location.href = "/template.csv"
   }
   return (
             <button className="btn btn-info" onClick={downloadFile}>
@@ -109,17 +111,17 @@ export default class Estimator extends React.Component {
   }
 
   componentDidMount() {
-    d3.csv('/estimate-incoming/IHME_pcts.csv').then(rows => {
+    d3.csv('/IHME_pcts.csv').then(rows => {
       rows.forEach(r => r.location_name = r.location_name.toLowerCase())
       ihme_df = new DataFrame(rows, [
         "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
 
-      d3.csv('/estimate-incoming/MIT_pcts.csv').then(rows => {
+      d3.csv('/MIT_pcts.csv').then(rows => {
         rows.forEach(r => r.location_name = r.location_name.toLowerCase())
         mit_df = new DataFrame(rows, [
           "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
         // do this 2nd
-        fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
+        fetch("/Tufts5470.csv").then(res => res.text()).then(data => {
             let rows = d3.csvParseRows(data);
             rows.splice(0, 1);
             this.fileUploaded(rows);
@@ -245,10 +247,16 @@ export default class Estimator extends React.Component {
         </td>
         <td><strong><h3>{sum.toFixed(2)}</h3>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Est. COVID+ {this.state.useSept
           ? "9/1"
-          : "today"}
+          : "today"} {this.state.useIHME ? <i>(IHME)</i> : <i>(YYG)</i>}
         <br/>(95% confidence interval)</td>
       </tr>
-
+      <tr>
+        <td colSpan="4">
+          <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
+          <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
+          <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
+        </td>
+      </tr>
       </thead>)
     }
     // console.log(this.state.uniStats);
@@ -256,7 +264,7 @@ export default class Estimator extends React.Component {
   }
 
   format() {
-    let ret = [['state', 'num_students', 'ihme_lower_prob', 'ihme_mean_prob', 'ihme_upper_prob', 'ihme_lower_prob_sept', 'ihme_mean_prob_sept', 'ihme_upper_prob_sept', 'mit_lower_prob', 'mit_mean_prob', 'mit_upper_prob', 'mit_lower_prob_sept', 'mit_mean_prob_sept', 'mit_upper_prob_sept']];
+    let ret = [['state', 'num_students', 'ihme_lower_prob', 'ihme_mean_prob', 'ihme_upper_prob', 'ihme_lower_prob_sept', 'ihme_mean_prob_sept', 'ihme_upper_prob_sept', 'yyg_lower_prob', 'yyg_mean_prob', 'yyg_upper_prob', 'yyg_lower_prob_sept', 'yyg_mean_prob_sept', 'yyg_upper_prob_sept']];
     let stats = this.state.uniStats;
     stats.forEach(row => {
       ret.push(row);
@@ -320,34 +328,35 @@ export default class Estimator extends React.Component {
                 <p>If the spinner doesn't disappear within 5s, please refresh the page.</p>
                 <RefreshButton />
               </div>
-            : <div>
-                <div>
-                  <button className="btn btn-info" onClick={() => this.setState({
-                    useSept: true
-                  })}>
-                  Calculate September Estimate
-                  </button>
-                  <button className="btn btn-info" onClick={() => this.setState({
-                    useSept: false
-                  })}>
-                  Calculate Today's Estimate
-                  </button>
+            : <div className="row">
+                <div className="offset-4">
+                  <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Data" : "Using YYG Data"}>
+                    <Dropdown.Item onClick={() => this.setState({
+                      useIHME: true
+                    })}>
+                      Use IHME Data
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => this.setState({
+                      useIHME: false
+                    })}>
+                      Use YYG Data
+                    </Dropdown.Item>
+                  </DropdownButton>
                 </div>
                 <div>
-                  <button className="btn btn-info" onClick={() => this.setState({
-                    useIHME: true
-                  })}>
-                  Use IHME Data
-                  </button>
-                  <button className="btn btn-info" onClick={() => this.setState({
-                    useIHME: false
-                  })}>
-                  Use YYG Data
-                  </button>
+                  <DropdownButton id="dropdown" class='floated' title={this.state.useSept ? "Estimate 9/1" : "Estimate today"}>
+                    <Dropdown.Item onClick={() => this.setState({
+                      useSept: false
+                    })}>
+                      Calculate today's estimate
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => this.setState({
+                      useSept: true
+                    })}>
+                      Calculate September estimate
+                    </Dropdown.Item>
+                  </DropdownButton>
                 </div>
-              <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
-              <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
-              <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
             </div>}
         </div>
 
