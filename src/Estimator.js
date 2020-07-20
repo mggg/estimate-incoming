@@ -3,7 +3,7 @@ import DataFrame from "dataframe-js";
 
 import FileInput from './fileinput';
 import LoadingGif from './loading.gif';
-import CSVLink from "react-csv";
+import {CSVLink} from "react-csv";
 
 const DownloadButton = props => {
   const downloadFile = () => {
@@ -179,7 +179,6 @@ export default class Estimator extends React.Component {
       loading: false
     })
 
-    console.log(states)
   }
 
   sort(sortMode) {
@@ -252,8 +251,21 @@ export default class Estimator extends React.Component {
 
       </thead>)
     }
-
+    // console.log(this.state.uniStats);
     return lines;
+  }
+
+  format() {
+    let ret = [
+      ["state", "est_positive_rate", "students", "est_positives"]
+    ];
+    let states = this.state.uniStats;
+    states.forEach(row => {
+      // console.log(row);
+      ret.push([row[0], row[3], row[1], row[3] * row[1]]);
+    });
+    // console.log(ret);
+    return ret
   }
 
   render() {
@@ -313,7 +325,7 @@ export default class Estimator extends React.Component {
               </div>
             : <div>
                 <div>
-                  <CSVLink data={this.approxPositiveStudents(6)}>
+                  <CSVLink data={this.format()}>
                     Download CSV
                   </CSVLink>
                 </div>
