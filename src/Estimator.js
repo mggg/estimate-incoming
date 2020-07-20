@@ -306,7 +306,7 @@ export default class Estimator extends React.Component {
           </div>
           <div className="col-sm-6">
             <h3>Process File</h3>
-            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private.<br/>
+            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private. You may choose from two different COVID tracking models (IHME or YYG), which provide slightly different estimates. Moreover, you can view how many students are estimated COVID+ <i>today</i>, or are predicted to be COVID+ on September 1st.<br/>
             <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
               <FileInput
                 onChange={this.fileUploaded.bind(this)}
