@@ -27,38 +27,55 @@ for i, row in statePopsFile.iterrows():
 
 def getMIT():
     twoDaysAgo = (today - dt.timedelta(days=2)).strftime("%Y-%m-%d")
+    today_strf = today.strftime("%Y-%m-%d")
+    sept = "2020-09-01"
+    dates = [today_strf, sept]
     MIT_url_head = 'https://raw.githubusercontent.com/youyanggu/covid19_projections/master/projections/'
     result = pd.DataFrame(columns=["location_name", "lower_prob", "mean_prob", "upper_prob"])
-    positivesLower = 0
-    positivesMean = 0
-    positivesUpper = 0
-    pop = 0
-    for abbrev in abbrevs:
-        state = abbrev_us_state[abbrev]
-        MIT_url = MIT_url_head + twoDaysAgo + '/US_' + abbrev + '.csv'
-        df = pd.read_csv(MIT_url)
+    resultSept = pd.DataFrame(columns=["lower_prob_sept", "mean_prob_sept", "upper_prob_sept"])
 
-        after_start_date = df["date"] == twoDaysAgo
-        df = df.loc[after_start_date]
+    for i, date in enumerate(dates):
+        positivesLower = 0
+        positivesMean = 0
+        positivesUpper = 0
+        pop = 0
+        for abbrev in abbrevs:
+            state = abbrev_us_state[abbrev]
+            MIT_url = MIT_url_head + twoDaysAgo + '/US_' + abbrev + '.csv'
+            df = pd.read_csv(MIT_url)
 
-        currentPositivesLower = df['predicted_current_infected_lower'].sum()
-        positivesLower += currentPositivesLower
-        currentPositivesMean = df['predicted_current_infected_mean'].sum()
-        positivesMean += currentPositivesMean
-        currentPositivesUpper = df['predicted_current_infected_upper'].sum()
-        positivesUpper += currentPositivesUpper
+            after_start_date = df["date"] == date
+            df = df.loc[after_start_date]
 
-        pop += statePops[state]
-        probPositiveLower = currentPositivesLower / statePops[state]
-        probPositiveMean = currentPositivesMean / statePops[state]
-        probPositiveUpper = currentPositivesUpper / statePops[state]
+            currentPositivesLower = df['predicted_current_infected_lower'].sum()
+            positivesLower += currentPositivesLower
+            currentPositivesMean = df['predicted_current_infected_mean'].sum()
+            positivesMean += currentPositivesMean
+            currentPositivesUpper = df['predicted_current_infected_upper'].sum()
+            positivesUpper += currentPositivesUpper
 
-        result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
+            pop += statePops[state]
+            probPositiveLower = currentPositivesLower / statePops[state]
+            probPositiveMean = currentPositivesMean / statePops[state]
+            probPositiveUpper = currentPositivesUpper / statePops[state]
 
-    intlProbLower = positivesLower/pop
-    intlProbMean = positivesMean/pop
-    intlProbUpper = positivesUpper/pop
-    result.loc[result.index.max() + 1] = ['International', intlProbLower, intlProbMean, intlProbUpper]
+            if (i == 0):
+                result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
+            else:
+                resultSept.loc[0 if pd.isnull(resultSept.index.max()) else resultSept.index.max() + 1] = [probPositiveLower, probPositiveMean, probPositiveUpper]
+
+        if (i == 0):
+            intlProbLower = positivesLower/pop
+            intlProbMean = positivesMean/pop
+            intlProbUpper = positivesUpper/pop
+            result.loc[result.index.max() + 1] = ['International', intlProbLower, intlProbMean, intlProbUpper]
+        else:
+            intlProbLower = positivesLower/pop
+            intlProbMean = positivesMean/pop
+            intlProbUpper = positivesUpper/pop
+            resultSept.loc[resultSept.index.max() + 1] = [intlProbLower, intlProbMean, intlProbUpper]
+
+    result = pd.concat([result, resultSept], axis=1)
     result.to_csv("./public/MIT_pcts.csv", index=False)
     return
 
@@ -89,36 +106,59 @@ def getIHME():
 
     #  Make final CSV
     result = pd.DataFrame(columns=["location_name", "lower_prob", "mean_prob", "upper_prob"])
-    positivesLower = 0
-    positivesMean = 0
-    positivesUpper = 0
-    pop = 0
-    for state in states:
-        ourState = df[df['location_name'] == state]
-        data = ourState[ourState['date'] == days[0]]
-        for i in range(1, len(days)):
-            data = pd.concat([data, ourState[ourState['date'] == days[i]]], axis=0)
-        pastInfections = data
-        currentPositivesLower = pastInfections['est_infections_lower'].sum()
-        positivesLower += currentPositivesLower
-        currentPositivesMean = pastInfections['est_infections_mean'].sum()
-        positivesMean += currentPositivesMean
-        currentPositivesUpper = pastInfections['est_infections_upper'].sum()
-        positivesUpper += currentPositivesUpper
-        pop += statePops[state]
+    resultSept = pd.DataFrame(columns=["lower_prob_sept", "mean_prob_sept", "upper_prob_sept"])
 
-        probPositiveLower = currentPositivesLower / statePops[state]
-        probPositiveMean = currentPositivesMean / statePops[state]
-        probPositiveUpper = currentPositivesUpper / statePops[state]
+    sept = dt.date(2020,9,1)
+    dates = [today, sept]
 
-        result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
+    for j, date in enumerate(dates):
+        days = []
+        for i in range(3,22): # Those infected between 3-21 days ago will test positive today
+            day = date - dt.timedelta(days=i)
+            days.append(day.strftime("%Y-%m-%d"))
 
-    intlProbLower = positivesLower/pop
-    intlProbMean = positivesMean/pop
-    intlProbUpper = positivesUpper/pop
-    result.loc[result.index.max() + 1] = ['International', intlProbLower, intlProbMean, intlProbUpper]
+        positivesLower = 0
+        positivesMean = 0
+        positivesUpper = 0
+        pop = 0
+        for state in states:
+            ourState = df[df['location_name'] == state]
+            data = ourState[ourState['date'] == days[0]]
+            for i in range(1, len(days)):
+                data = pd.concat([data, ourState[ourState['date'] == days[i]]], axis=0)
+            pastInfections = data
+            currentPositivesLower = pastInfections['est_infections_lower'].sum()
+            positivesLower += currentPositivesLower
+            currentPositivesMean = pastInfections['est_infections_mean'].sum()
+            positivesMean += currentPositivesMean
+            currentPositivesUpper = pastInfections['est_infections_upper'].sum()
+            positivesUpper += currentPositivesUpper
+            pop += statePops[state]
+
+            probPositiveLower = currentPositivesLower / statePops[state]
+            probPositiveMean = currentPositivesMean / statePops[state]
+            probPositiveUpper = currentPositivesUpper / statePops[state]
+
+            if (j == 0):
+                result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
+            else:
+                resultSept.loc[0 if pd.isnull(resultSept.index.max()) else resultSept.index.max() + 1] = [probPositiveLower, probPositiveMean, probPositiveUpper]
+
+        if (j == 0):
+            intlProbLower = positivesLower/pop
+            intlProbMean = positivesMean/pop
+            intlProbUpper = positivesUpper/pop
+            result.loc[result.index.max() + 1] = ['International', intlProbLower, intlProbMean, intlProbUpper]
+        else:
+            intlProbLower = positivesLower/pop
+            intlProbMean = positivesMean/pop
+            intlProbUpper = positivesUpper/pop
+            resultSept.loc[resultSept.index.max() + 1] = [intlProbLower, intlProbMean, intlProbUpper]
+
+    result = pd.concat([result, resultSept], axis=1)
     result.to_csv("./public/IHME_pcts.csv", index=False)
     return
+
 
 def sh(script, msg=0):
     os.system("zsh -c '%s'" % script)

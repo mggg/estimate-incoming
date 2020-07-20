@@ -3,6 +3,7 @@ import DataFrame from "dataframe-js";
 
 import FileInput from './fileinput';
 import LoadingGif from './loading.gif';
+import CSVLink from "react-csv";
 
 const DownloadButton = props => {
   const downloadFile = () => {
@@ -102,7 +103,8 @@ export default class Estimator extends React.Component {
       loading: true,
       sortMode: 0,
       uploadError: false,
-      useIHME: true
+      useIHME: true,
+      useSept: false
     }
   }
 
@@ -110,12 +112,12 @@ export default class Estimator extends React.Component {
     d3.csv('/estimate-incoming/IHME_pcts.csv').then(rows => {
       rows.forEach(r => r.location_name = r.location_name.toLowerCase())
       ihme_df = new DataFrame(rows, [
-        "location_name","lower_prob", "mean_prob", "upper_prob"]);
+        "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
 
       d3.csv('/estimate-incoming/MIT_pcts.csv').then(rows => {
         rows.forEach(r => r.location_name = r.location_name.toLowerCase())
         mit_df = new DataFrame(rows, [
-          "location_name","lower_prob", "mean_prob", "upper_prob"]);
+          "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
         // do this 2nd
         fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
             let rows = d3.csvParseRows(data);
@@ -142,21 +144,33 @@ export default class Estimator extends React.Component {
       let ihme_state_df = ihme_df.filter({'location_name':state[0]}),
           ihme_lower_prob = ihme_state_df.stat.mean('lower_prob'),
           ihme_mean_prob = ihme_state_df.stat.mean('mean_prob'),
-          ihme_upper_prob = ihme_state_df.stat.mean('upper_prob');
+          ihme_upper_prob = ihme_state_df.stat.mean('upper_prob'),
+          ihme_lower_prob_sept = ihme_state_df.stat.mean('lower_prob_sept'),
+          ihme_mean_prob_sept = ihme_state_df.stat.mean('mean_prob_sept'),
+          ihme_upper_prob_sept = ihme_state_df.stat.mean('upper_prob_sept');
       state.push(ihme_lower_prob);
       state.push(ihme_mean_prob);
-      state.push(ihme_upper_prob);
+      state.push(ihme_upper_prob)
+      state.push(ihme_lower_prob_sept);
+      state.push(ihme_mean_prob_sept);
+      state.push(ihme_upper_prob_sept);
 
       let mit_state_df = mit_df.filter({'location_name':state[0]}),
           mit_lower_prob = mit_state_df.stat.mean('lower_prob'),
           mit_mean_prob = mit_state_df.stat.mean('mean_prob'),
-          mit_upper_prob = mit_state_df.stat.mean('upper_prob');
+          mit_upper_prob = mit_state_df.stat.mean('upper_prob'),
+          mit_lower_prob_sept = mit_state_df.stat.mean('lower_prob_sept'),
+          mit_mean_prob_sept = mit_state_df.stat.mean('mean_prob_sept'),
+          mit_upper_prob_sept = mit_state_df.stat.mean('upper_prob_sept');
       state.push(mit_lower_prob);
       state.push(mit_mean_prob);
       state.push(mit_upper_prob);
+      state.push(mit_lower_prob_sept);
+      state.push(mit_mean_prob_sept);
+      state.push(mit_upper_prob_sept);
     })
 
-    // input: [ [name, students, ihme_lower_prob, ihme_mean_prob, ihme_upper_prob, mit_lower_prob, mit_mean_prob, mit_upper_prob] ]
+    // input: [ [name, students, ihme_lower_prob, ihme_mean_prob [idx=3], ihme_upper_prob, ihme_lower_prob_sept, ihme_mean_prob_sept [idx=6], ihme_upper_prob_sept, mit_lower_prob, mit_mean_prob [idx=9], mit_upper_prob, mit_lower_prob_sept, mit_mean_prob_sept [idx=12], mit_upper_prob_sept] ]
 
 
     this.setState({
@@ -164,6 +178,8 @@ export default class Estimator extends React.Component {
       uploadError: false,
       loading: false
     })
+
+    console.log(states)
   }
 
   sort(sortMode) {
@@ -228,7 +244,10 @@ export default class Estimator extends React.Component {
           <strong><h3>{estStudents.toLocaleString()}</h3></strong>
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
-        <td><strong><h3>{sum.toFixed(2)}</h3>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Est. COVID+ today<br/>(95% confidence interval)</td>
+        <td><strong><h3>{sum.toFixed(2)}</h3>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Est. COVID+ {this.state.useSept
+          ? "9/1"
+          : "today"}
+        <br/>(95% confidence interval)</td>
       </tr>
 
       </thead>)
@@ -294,6 +313,23 @@ export default class Estimator extends React.Component {
               </div>
             : <div>
                 <div>
+                  <CSVLink data={this.approxPositiveStudents(6)}>
+                    Download CSV
+                  </CSVLink>
+                </div>
+                <div>
+                  <button className="btn btn-info" onClick={() => this.setState({
+                    useSept: true
+                  })}>
+                  Calculate September Estimate
+                  </button>
+                  <button className="btn btn-info" onClick={() => this.setState({
+                    useSept: false
+                  })}>
+                  Calculate Today's Estimate
+                  </button>
+                </div>
+                <div>
                   <button className="btn btn-info" onClick={() => this.setState({
                     useIHME: true
                   })}>
@@ -318,9 +354,26 @@ export default class Estimator extends React.Component {
             : this.state.loading
               ? <p/>
               : <table className="table">
-                    {this.state.useIHME
-                      ? this.approxPositiveStudents(3)
-                      : this.approxPositiveStudents(6)}
+                {
+                  (() => {
+                    if (this.state.useIHME && this.state.useSept) {
+                      // console.log(0);
+                      return this.approxPositiveStudents(6)
+                    };
+                    if (this.state.useIHME && (!this.state.useSept)) {
+                      // console.log(1);
+                      return this.approxPositiveStudents(3)
+                    };
+                    if ((!this.state.useIHME) && this.state.useSept) {
+                      // console.log(2);
+                      return this.approxPositiveStudents(12)
+                    };
+                    if ((!this.state.useIHME) && (!this.state.useSept)) {
+                      // console.log(3);
+                      return this.approxPositiveStudents(9)
+                    };
+                  })()
+                };
                 </table>
               }
           </div>
@@ -335,7 +388,6 @@ export default class Estimator extends React.Component {
           at Tisch College of Tufts University.  For information, contact&nbsp;
           <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.
         </p>
-        <p><sup>*</sup> IHME Data from New Hampshire is currently unavailable.</p>
       </section>
     </div>
   }
