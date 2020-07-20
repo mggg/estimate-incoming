@@ -12,7 +12,7 @@ const DownloadButton = props => {
     window.location.href = "./template.csv"
   }
   return (
-            <button className="btn btn-info" onClick={downloadFile}>
+            <button id="download" className="btn btn-info" onClick={downloadFile}>
               Download Template
             </button>
   )
@@ -248,13 +248,13 @@ export default class Estimator extends React.Component {
         <td><strong><h3>{sum.toFixed(2)}</h3>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Est. COVID+ {this.state.useSept
           ? "9/1"
           : "today"} {this.state.useIHME ? <i>(IHME)</i> : <i>(YYG)</i>}
-        <br/>(95% confidence interval)</td>
+        <br/>[95% confidence interval]</td>
       </tr>
       <tr>
         <td colSpan="4">
-          <button className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
-          <button className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
-          <button className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
+          <button id="sorts" className="btn btn-info" onClick={e => this.sort(0)}>Sort A->Z</button>
+          <button id="sorts" className="btn btn-info" onClick={e => this.sort(1)}>Sort by State %</button>
+          <button id="sorts" className="btn btn-info" onClick={e => this.sort(2)}>Sort by Positives</button>
         </td>
       </tr>
       </thead>)
@@ -294,7 +294,7 @@ export default class Estimator extends React.Component {
         <div className="row">
           <div className="col-sm-6">
             <h3>Create CSV</h3>
-            <DownloadButton /><br/>
+            <DownloadButton/><br/>
             It should have this raw format...<br/>
               <code>
               state,students<br/>

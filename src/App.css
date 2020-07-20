@@ -71,6 +71,14 @@ nav {
   margin-bottom: 1em;
 }
 
+#download {
+  background-color: #0192a7;
+}
+
+#sorts {
+  background-color: #23b4c9;
+}
+
 #dropdown {
   background-color: #12a3b8;
   border: 0px;
