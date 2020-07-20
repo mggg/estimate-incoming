@@ -9,7 +9,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 
 const DownloadButton = props => {
   const downloadFile = () => {
-    window.location.href = "/template.csv"
+    window.location.href = window.location.pathname + "/template.csv"
   }
   return (
             <button className="btn btn-info" onClick={downloadFile}>
@@ -111,17 +111,17 @@ export default class Estimator extends React.Component {
   }
 
   componentDidMount() {
-    d3.csv('/IHME_pcts.csv').then(rows => {
+    d3.csv('./IHME_pcts.csv').then(rows => {
       rows.forEach(r => r.location_name = r.location_name.toLowerCase())
       ihme_df = new DataFrame(rows, [
         "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
 
-      d3.csv('/MIT_pcts.csv').then(rows => {
+      d3.csv('./MIT_pcts.csv').then(rows => {
         rows.forEach(r => r.location_name = r.location_name.toLowerCase())
         mit_df = new DataFrame(rows, [
           "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
         // do this 2nd
-        fetch("/Tufts5470.csv").then(res => res.text()).then(data => {
+        fetch("./Tufts5470.csv").then(res => res.text()).then(data => {
             let rows = d3.csvParseRows(data);
             rows.splice(0, 1);
             this.fileUploaded(rows);
