@@ -109,18 +109,17 @@ export default class Estimator extends React.Component {
   }
 
   componentDidMount() {
-    console.log(window.location.pathname);
-    d3.csv(window.location.pathname + '/IHME_pcts.csv').then(rows => {
+    d3.csv('./IHME_pcts.csv').then(rows => {
       rows.forEach(r => r.location_name = r.location_name.toLowerCase())
       ihme_df = new DataFrame(rows, [
         "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
 
-      d3.csv(window.location.pathname + '/MIT_pcts.csv').then(rows => {
+      d3.csv('./MIT_pcts.csv').then(rows => {
         rows.forEach(r => r.location_name = r.location_name.toLowerCase())
         mit_df = new DataFrame(rows, [
           "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
         // do this 2nd
-        fetch(window.location.pathname + "/Tufts5470.csv").then(res => res.text()).then(data => {
+        fetch("./Tufts5470.csv").then(res => res.text()).then(data => {
             let rows = d3.csvParseRows(data);
             rows.splice(0, 1);
             this.fileUploaded(rows);
