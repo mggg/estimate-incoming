@@ -107,7 +107,8 @@ export default class Estimator extends React.Component {
       sortMode: 0,
       uploadError: false,
       useIHME: true,
-      useSept: false
+      useSept: false,
+      exportClicked: false
     }
   }
 
@@ -196,9 +197,11 @@ export default class Estimator extends React.Component {
       if (n === sortMode) {
         ReactDOM.findDOMNode(elements[sortMode]).style.borderStyle = 'fill';
         ReactDOM.findDOMNode(elements[sortMode]).style.borderColor = 'black';
+        ReactDOM.findDOMNode(elements[sortMode]).style.backgroundColor = '#23b4c9';
       } else {
         ReactDOM.findDOMNode(elements[n]).style.borderStyle = 'fill';
         ReactDOM.findDOMNode(elements[n]).style.borderColor = 'white';
+        ReactDOM.findDOMNode(elements[n]).style.backgroundColor = '#23b4c9';
       };
     });
   }
@@ -321,7 +324,7 @@ export default class Estimator extends React.Component {
           </div>
           <div className="col-sm-6">
             <h3>Process File</h3>
-            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private. Once the data have loaded, scroll to the bottom of the page to export the data as a CSV file.<br/>
+            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private. Once the data have loaded, scroll to the bottom of the page to export the data as a CSV file.<br/><br/>
             <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
               <FileInput
                 onChange={this.fileUploaded.bind(this)}
@@ -345,6 +348,20 @@ export default class Estimator extends React.Component {
               </div>
             : <div className="row">
                 <div className="offset-4">
+                  <DropdownButton id="dropdown" title={this.state.useSept ? "Sept. 1 Estimate" : "Today's Estimate"}>
+                    <Dropdown.Item onClick={() => this.setState({
+                      useSept: false
+                    })}>
+                      Today's Estimate
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => this.setState({
+                      useSept: true
+                    })}>
+                      Sept. 1 Estimate
+                    </Dropdown.Item>
+                  </DropdownButton>
+                </div>
+                <div>
                     <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Data" : "Using YYG Data"}>
                       <Dropdown.Item onClick={() => this.setState({
                         useIHME: true
@@ -357,20 +374,6 @@ export default class Estimator extends React.Component {
                         Use YYG Data
                       </Dropdown.Item>
                     </DropdownButton>
-                </div>
-                <div>
-                  <DropdownButton id="dropdown" title={this.state.useSept ? "Estimate 9/1" : "Estimate today"}>
-                    <Dropdown.Item onClick={() => this.setState({
-                      useSept: false
-                    })}>
-                      Calculate today's estimate
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={() => this.setState({
-                      useSept: true
-                    })}>
-                      Calculate September estimate
-                    </Dropdown.Item>
-                  </DropdownButton>
                 </div>
             </div>}
         </div>
@@ -407,13 +410,24 @@ export default class Estimator extends React.Component {
           </div>
         </div>
       </div>
-      <div>
-        <CSVLink data={this.formatTableToCSV()}
-                 className="btn btn-info"
-                 filename="estimates.csv">
-          Export CSV
-        </CSVLink>
-      </div>
+      {this.state.exportClicked
+        ? <div>
+            <p className="qSection" style={{textAlign:"left", padding: '10px'}}>
+              You should now have 'stateCovidProbabilities.csv' in your Downloads folder. It contains a row for every state for which you submitted states-of-origin data. There is a column for the number of students incoming from that state. The rest of the columns provide the estimated proportion of that state that is COVID+ using either the IHME model or the YYG model. Each model provides an estimate for today as well as a prediction for Sept. 1, along with lower and upper bounds for each proportion. To find the number of students incoming from a state that are expected to test positive, multiply the number of students column by the corresponding state proportion column.
+            </p>
+          </div>
+        : <div>
+          <CSVLink data={this.formatTableToCSV()}
+                   className="btn btn-info"
+                   filename="stateCovidProbabilities.csv"
+                   onClick={() => {
+                    this.setState({
+                     exportClicked: true
+                   })}
+            }>
+            Export CSV
+          </CSVLink>
+        </div>}
       <hr id="separator"/>
       <section className="qSection">
         <h2>About the data</h2>
