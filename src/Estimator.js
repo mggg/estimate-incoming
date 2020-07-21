@@ -6,6 +6,7 @@ import LoadingGif from './loading.gif';
 import {CSVLink} from "react-csv";
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import Dropdown from 'react-bootstrap/Dropdown';
+import ReactDOM from 'react-dom';
 
 const DownloadButton = props => {
   const downloadFile = () => {
@@ -181,10 +182,25 @@ export default class Estimator extends React.Component {
       loading: false
     })
 
+    let element = document.querySelector('#sorts');
+    ReactDOM.findDOMNode(element).style.borderStyle = 'fill';
+    ReactDOM.findDOMNode(element).style.borderColor = 'black';
+
   }
 
   sort(sortMode) {
-    this.setState({ sortMode: sortMode })
+    this.setState({ sortMode: sortMode });
+    let elements = document.querySelectorAll('#sorts');
+    var buttons = [0,1,2];
+    buttons.forEach(n => {
+      if (n === sortMode) {
+        ReactDOM.findDOMNode(elements[sortMode]).style.borderStyle = 'fill';
+        ReactDOM.findDOMNode(elements[sortMode]).style.borderColor = 'black';
+      } else {
+        ReactDOM.findDOMNode(elements[n]).style.borderStyle = 'fill';
+        ReactDOM.findDOMNode(elements[n]).style.borderColor = 'white';
+      };
+    });
   }
 
   approxPositiveStudents(j) {
@@ -263,13 +279,12 @@ export default class Estimator extends React.Component {
     return lines;
   }
 
-  format() {
+  formatTableToCSV() {
     let ret = [['state', 'num_students', 'ihme_lower_prob', 'ihme_mean_prob', 'ihme_upper_prob', 'ihme_lower_prob_sept', 'ihme_mean_prob_sept', 'ihme_upper_prob_sept', 'yyg_lower_prob', 'yyg_mean_prob', 'yyg_upper_prob', 'yyg_lower_prob_sept', 'yyg_mean_prob_sept', 'yyg_upper_prob_sept']];
     let stats = this.state.uniStats;
     stats.forEach(row => {
       ret.push(row);
     });
-    console.log(ret);
     return ret;
   }
 
@@ -284,13 +299,13 @@ export default class Estimator extends React.Component {
             <p style={{textAlign: 'left', padding: '10px'}}>
               <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong><br/><br/>
               <strong>How to use the calculator:</strong>&nbsp;
-              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of COVID-19 positive students today, accompanied by a 95% confidence interval and a state-by-state breakdown below. By default, the calculator is populated with partial data from Tufts University.
+              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of COVID-19 positive students today, accompanied by a 95% confidence interval and a state-by-state breakdown below. You may choose from two different COVID tracking models (IHME or YYG), which provide slightly different estimates. Moreover, you can view how many students are estimated COVID+ <i>today</i>, or are predicted to be COVID+ on September 1st. By default, the calculator is populated with partial data from Tufts University.
             </p>
           </section>
         </div>
 
         <hr id="separator"/>
-        <h2>Input your states of origin data</h2><br/>
+        <h2>Input your states-of-origin data</h2><br/>
         <div className="row">
           <div className="col-sm-6">
             <h3>Create CSV</h3>
@@ -306,7 +321,7 @@ export default class Estimator extends React.Component {
           </div>
           <div className="col-sm-6">
             <h3>Process File</h3>
-            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private. You may choose from two different COVID tracking models (IHME or YYG), which provide slightly different estimates. Moreover, you can view how many students are estimated COVID+ <i>today</i>, or are predicted to be COVID+ on September 1st.<br/>
+            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private.<br/>
             <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
               <FileInput
                 onChange={this.fileUploaded.bind(this)}
@@ -330,21 +345,21 @@ export default class Estimator extends React.Component {
               </div>
             : <div className="row">
                 <div className="offset-4">
-                  <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Data" : "Using YYG Data"}>
-                    <Dropdown.Item onClick={() => this.setState({
-                      useIHME: true
-                    })}>
-                      Use IHME Data
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={() => this.setState({
-                      useIHME: false
-                    })}>
-                      Use YYG Data
-                    </Dropdown.Item>
-                  </DropdownButton>
+                    <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Data" : "Using YYG Data"}>
+                      <Dropdown.Item onClick={() => this.setState({
+                        useIHME: true
+                      })}>
+                        Use IHME Data
+                      </Dropdown.Item>
+                      <Dropdown.Item onClick={() => this.setState({
+                        useIHME: false
+                      })}>
+                        Use YYG Data
+                      </Dropdown.Item>
+                    </DropdownButton>
                 </div>
                 <div>
-                  <DropdownButton id="dropdown" class='floated' title={this.state.useSept ? "Estimate 9/1" : "Estimate today"}>
+                  <DropdownButton id="dropdown" title={this.state.useSept ? "Estimate 9/1" : "Estimate today"}>
                     <Dropdown.Item onClick={() => this.setState({
                       useSept: false
                     })}>
@@ -393,7 +408,7 @@ export default class Estimator extends React.Component {
         </div>
       </div>
       <div>
-        <CSVLink data={this.format()}
+        <CSVLink data={this.formatTableToCSV()}
                  className="btn btn-info"
                  filename="estimates.csv">
           Download CSV
