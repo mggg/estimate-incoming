@@ -264,7 +264,7 @@ export default class Estimator extends React.Component {
           <strong><h2>{estStudents.toLocaleString()}</h2></strong>
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
-        <td colSpan="2"><strong><h2>{sum.toFixed(2)}</h2>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Estimated COVID+ students {this.state.useSept
+        <td colSpan="2"><strong><h2>{sum.toFixed(2)}</h2>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Estimated COVID-19+ students {this.state.useSept
           ? "on 9/1"
           : "today"} {this.state.useIHME ? <i>(IHME)</i> : <i>(YYG)</i>}
         <br/>[95% confidence interval]</td>
@@ -283,7 +283,7 @@ export default class Estimator extends React.Component {
   }
 
   formatTableToCSV() {
-    let ret = [['state', 'num_students', 'ihme_lower_prob', 'ihme_mean_prob', 'ihme_upper_prob', 'ihme_lower_prob_sept', 'ihme_mean_prob_sept', 'ihme_upper_prob_sept', 'yyg_lower_prob', 'yyg_mean_prob', 'yyg_upper_prob', 'yyg_lower_prob_sept', 'yyg_mean_prob_sept', 'yyg_upper_prob_sept']];
+    let ret = [['state', 'num_students', 'ihme_lower_rate', 'ihme_mean_rate', 'ihme_upper_rate', 'ihme_lower_rate_sept', 'ihme_mean_rate_sept', 'ihme_upper_rate_sept', 'yyg_lower_rate', 'yyg_mean_rate', 'yyg_upper_rate', 'yyg_lower_rate_sept', 'yyg_mean_rate_sept', 'yyg_upper_rate_sept']];
     let stats = this.state.uniStats;
     stats.forEach(row => {
       ret.push(row);
@@ -301,8 +301,8 @@ export default class Estimator extends React.Component {
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
               <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong><br/><br/>
-              <strong>How to use the calculator:</strong>&nbsp;
-              We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of COVID-19 positive students today, accompanied by a 95% confidence interval and a state-by-state breakdown below. You may choose from two different COVID tracking models (IHME or YYG), which provide slightly different estimates. Moreover, you can view how many students are estimated COVID+ <i>today</i>, or are predicted to be COVID+ on September 1st. By default, the calculator is populated with partial data from Tufts University.
+              This is a web tool to interface with two different COVID tracking models (called <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and <a href="https://covid19-projections.com" target="_blank">YYG</a>), which both estimate how many people in each state became infected with COVID-19 each day using death data as their main evidence rather than case counts. Using <a href="https://www.medrxiv.org/content/10.1101/2020.07.13.20152793v2" target="_blank">supplemental data</a> on the PCR test positivity rate by day, we produce an estimate of positive tests.<br/><br/>
+              <strong>How to use the calculator:</strong> We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of students who would test COVID-19 positive <i>today</i> or on <i>Sept. 1</i>, according to the two models.  We also show a 95% confidence interval and a state-by-state breakdown according to the same models. By default, the calculator is populated with partial data from Tufts University.<br/><br/>We emphasize that this estimator is for PCR test positivity, rather than infection or symptoms.
             </p>
           </section>
         </div>
@@ -362,16 +362,16 @@ export default class Estimator extends React.Component {
                   </DropdownButton>
                 </div>
                 <div>
-                    <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Data" : "Using YYG Data"}>
+                    <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Model" : "Using YYG Model"}>
                       <Dropdown.Item onClick={() => this.setState({
                         useIHME: true
                       })}>
-                        Use IHME Data
+                        Use IHME Model
                       </Dropdown.Item>
                       <Dropdown.Item onClick={() => this.setState({
                         useIHME: false
                       })}>
-                        Use YYG Data
+                        Use YYG Model
                       </Dropdown.Item>
                     </DropdownButton>
                 </div>
