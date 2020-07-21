@@ -252,17 +252,17 @@ export default class Estimator extends React.Component {
       lines.unshift(
         <thead>
         <tr key="total" id="total">
-        <td colSpan="2">
-          <strong><h3>Total</h3></strong>
+        <td>
+          <strong><h2>Total</h2></strong>
           File included {matchedStates}/53 regions<br/>
           (50 U.S. States + PR + D.C. + International)
         </td>
         <td>
-          <strong><h3>{estStudents.toLocaleString()}</h3></strong>
+          <strong><h2>{estStudents.toLocaleString()}</h2></strong>
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
-        <td><strong><h3>{sum.toFixed(2)}</h3>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Est. COVID+ {this.state.useSept
-          ? "9/1"
+        <td colSpan="2"><strong><h2>{sum.toFixed(2)}</h2>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Estimated COVID+ students {this.state.useSept
+          ? "on 9/1"
           : "today"} {this.state.useIHME ? <i>(IHME)</i> : <i>(YYG)</i>}
         <br/>[95% confidence interval]</td>
       </tr>
@@ -321,7 +321,7 @@ export default class Estimator extends React.Component {
           </div>
           <div className="col-sm-6">
             <h3>Process File</h3>
-            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private.<br/>
+            After editing the template, upload or drag and drop it onto this page. The calculator works locally in your browser and your data is not uploaded, so it remains private. Once the data have loaded, scroll to the bottom of the page to export the data as a CSV file.<br/>
             <div className="col-sm-6 offset-3" style={{border:"1px solid #ccc", padding: 6}}>
               <FileInput
                 onChange={this.fileUploaded.bind(this)}
@@ -411,7 +411,7 @@ export default class Estimator extends React.Component {
         <CSVLink data={this.formatTableToCSV()}
                  className="btn btn-info"
                  filename="estimates.csv">
-          Download CSV
+          Export CSV
         </CSVLink>
       </div>
       <hr id="separator"/>

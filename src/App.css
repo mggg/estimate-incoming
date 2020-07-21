@@ -83,6 +83,11 @@ nav {
   background-color: #12a3b8;
   border: 0px;
 }
+
+.sum {
+  font-size: 1.5em;
+}
+
 .col-sm-4 {
   text-align: left;
 }
