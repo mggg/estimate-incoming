@@ -430,6 +430,7 @@ export default class Estimator extends React.Component {
         </div>}
       <hr id="separator"/>
       <section className="qSection">
+        <p> Page last updated 5:00pm ET, 9/1/2020. </p>
         <h2>About the data</h2>
         <p style={{textAlign: 'left', padding: '10px'}}>
           We use two different models: University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which estimate the true number of active infections in each state today. Multiplying the number of active infections by the PCR test positivity rate gives us an estimate for the number of people in the state who would test positive. Read more about each model's assumptions  <a href="http://www.healthdata.org/covid/faqs" target="_blank">here</a> (IHME) and  <a href="https://covid19-projections.com/about/#about-the-model" target="_blank">here</a> (YYG). Dividing the number of positive tests by a state's population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
