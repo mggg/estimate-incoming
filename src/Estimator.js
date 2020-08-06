@@ -87,6 +87,8 @@ const postalCodeToName = {
 
 let ihme_df = null;
 let mit_df = null;
+let nyt_df = null;
+var modelNames = ["IHME", "YYG", "NYT"];
 
 function lowerState(txt) {
   txt = txt.trim();
@@ -100,13 +102,14 @@ function lowerState(txt) {
 export default class Estimator extends React.Component {
   constructor(props) {
     super(props);
-
+    // models: 0 = IHME, 1 = YYG, 2 = NYT
     this.state = {
       uniStats: [],
       loading: true,
       sortMode: 0,
       uploadError: false,
       useIHME: true,
+      model: 0,
       useSept: false,
       exportClicked: false
     }
@@ -122,11 +125,17 @@ export default class Estimator extends React.Component {
         rows.forEach(r => r.location_name = r.location_name.toLowerCase())
         mit_df = new DataFrame(rows, [
           "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_sept", "mean_prob_sept", "upper_prob_sept"]);
-        // do this 2nd
-        fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
-            let rows = d3.csvParseRows(data);
-            rows.splice(0, 1);
-            this.fileUploaded(rows);
+
+        d3.csv('/estimate-incoming/NYT_pcts.csv').then(rows => {
+          rows.forEach(r => r.location_name = r.location_name.toLowerCase())
+          nyt_df = new DataFrame(rows, [
+            "location_name","lower_prob", "mean_prob", "upper_prob"]);
+          // do this next
+          fetch("/estimate-incoming/Tufts5470.csv").then(res => res.text()).then(data => {
+              let rows = d3.csvParseRows(data);
+              rows.splice(0, 1);
+              this.fileUploaded(rows);
+            });
           });
       });
     });
@@ -172,9 +181,17 @@ export default class Estimator extends React.Component {
       state.push(mit_lower_prob_sept);
       state.push(mit_mean_prob_sept);
       state.push(mit_upper_prob_sept);
+
+      let nyt_state_df = nyt_df.filter({'location_name':state[0]}),
+          nyt_lower_prob = nyt_state_df.stat.mean('lower_prob'),
+          nyt_mean_prob = nyt_state_df.stat.mean('mean_prob'),
+          nyt_upper_prob = nyt_state_df.stat.mean('upper_prob')
+      state.push(nyt_lower_prob);
+      state.push(nyt_mean_prob);
+      state.push(nyt_upper_prob);
     })
 
-    // input: [ [name, students, ihme_lower_prob, ihme_mean_prob [idx=3], ihme_upper_prob, ihme_lower_prob_sept, ihme_mean_prob_sept [idx=6], ihme_upper_prob_sept, mit_lower_prob, mit_mean_prob [idx=9], mit_upper_prob, mit_lower_prob_sept, mit_mean_prob_sept [idx=12], mit_upper_prob_sept] ]
+    // input: [ [name, students, ihme_lower_prob, ihme_mean_prob [idx=3], ihme_upper_prob, ihme_lower_prob_sept, ihme_mean_prob_sept [idx=6], ihme_upper_prob_sept, mit_lower_prob, mit_mean_prob [idx=9], mit_upper_prob, mit_lower_prob_sept, mit_mean_prob_sept [idx=12], mit_upper_prob_sept, nyt_lower_prob, nyt_mean_prob [idx=15], nyt_upper_prop] ]
 
 
     this.setState({
@@ -266,8 +283,11 @@ export default class Estimator extends React.Component {
         </td>
         <td colSpan="2"><strong><h2>{sum.toFixed(2)}</h2>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Estimated COVID-19+ students {this.state.useSept
           ? "on 9/1"
-          : "today"} {this.state.useIHME ? <i>(IHME)</i> : <i>(YYG)</i>}
-        <br/>[95% confidence interval]</td>
+          : "today"} {"(" + modelNames[this.state.model] + ")"}
+        <br/>{((this.state.model === 0) | (this.state.model === 1))
+          ? "[95% confidence interval]"
+          : "[Lower bound, Upper bound]"
+        }</td>
       </tr>
       <tr>
         <td colSpan="4">
@@ -283,7 +303,7 @@ export default class Estimator extends React.Component {
   }
 
   formatTableToCSV() {
-    let ret = [['state', 'num_students', 'ihme_lower_rate', 'ihme_mean_rate', 'ihme_upper_rate', 'ihme_lower_rate_sept', 'ihme_mean_rate_sept', 'ihme_upper_rate_sept', 'yyg_lower_rate', 'yyg_mean_rate', 'yyg_upper_rate', 'yyg_lower_rate_sept', 'yyg_mean_rate_sept', 'yyg_upper_rate_sept']];
+    let ret = [['state', 'num_students', 'ihme_lower_rate', 'ihme_mean_rate', 'ihme_upper_rate', 'ihme_lower_rate_sept', 'ihme_mean_rate_sept', 'ihme_upper_rate_sept', 'yyg_lower_rate', 'yyg_mean_rate', 'yyg_upper_rate', 'yyg_lower_rate_sept', 'yyg_mean_rate_sept', 'yyg_upper_rate_sept', 'nyt_lower_rate', 'nyt_mean_rate', 'nyt_upper_rate']];
     let stats = this.state.uniStats;
     stats.forEach(row => {
       ret.push(row);
@@ -301,7 +321,7 @@ export default class Estimator extends React.Component {
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
               <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they arrive on campus in the Fall of 2020.</strong><br/><br/>
-              This is a web tool to interface with two different COVID tracking models (called <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and <a href="https://covid19-projections.com" target="_blank">YYG</a>), which both estimate how many people in each state became infected with COVID-19 each day using death data as their main evidence rather than case counts. Using <a href="https://www.medrxiv.org/content/10.1101/2020.07.13.20152793v2" target="_blank">supplemental data</a> on the PCR test positivity rate by day, we produce an estimate of positive tests.<br/><br/>
+              This is a web tool to interface with two different COVID tracking models (called <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and <a href="https://covid19-projections.com" target="_blank">YYG</a>), which both estimate how many people in each state became infected with COVID-19 each day using death data as their main evidence rather than case counts. Using <a href="https://www.medrxiv.org/content/10.1101/2020.07.13.20152793v2" target="_blank">supplemental data</a> on the PCR test positivity rate by day, we produce an estimate of positive tests. We also provide an estimate based on the New York Times <a href="https://github.com/nytimes/covid-19-data" target="_blank">database</a> of case counts and the assumption that 5 people are infected for each known case. <br/><br/>
               <strong>How to use the calculator:</strong> We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of students who would test COVID-19 positive <i>today</i> or on <i>Sept. 1</i>, according to the two models.  We also show a 95% confidence interval and a state-by-state breakdown according to the same models. By default, the calculator is populated with partial data from Tufts University.<br/><br/>We emphasize that this estimator is for PCR test positivity, rather than infection or symptoms.
             </p>
           </section>
@@ -354,7 +374,7 @@ export default class Estimator extends React.Component {
                     })}>
                       Today's Estimate
                     </Dropdown.Item>
-                    <Dropdown.Item onClick={() => this.setState({
+                    <Dropdown.Item disabled={this.state.model === 2} onClick={() => this.setState({
                       useSept: true
                     })}>
                       Sept. 1 Estimate
@@ -362,16 +382,21 @@ export default class Estimator extends React.Component {
                   </DropdownButton>
                 </div>
                 <div>
-                    <DropdownButton id="dropdown" title={this.state.useIHME ? "Using IHME Model" : "Using YYG Model"}>
+                    <DropdownButton id="dropdown" title={"Using " + modelNames[this.state.model] + " Model"}>
                       <Dropdown.Item onClick={() => this.setState({
-                        useIHME: true
+                        model: 0
                       })}>
                         Use IHME Model
                       </Dropdown.Item>
                       <Dropdown.Item onClick={() => this.setState({
-                        useIHME: false
+                        model: 1
                       })}>
                         Use YYG Model
+                      </Dropdown.Item>
+                      <Dropdown.Item disabled={this.state.useSept === true} onClick={() => this.setState({
+                        model: 2
+                      })}>
+                        Use NYT Model
                       </Dropdown.Item>
                     </DropdownButton>
                 </div>
@@ -387,21 +412,25 @@ export default class Estimator extends React.Component {
               : <table className="table">
                 {
                   (() => {
-                    if (this.state.useIHME && this.state.useSept) {
+                    if ((this.state.model === 0) && this.state.useSept) {
                       // console.log(0);
                       return this.approxPositiveStudents(6)
                     };
-                    if (this.state.useIHME && (!this.state.useSept)) {
+                    if ((this.state.model === 0) && (!this.state.useSept)) {
                       // console.log(1);
                       return this.approxPositiveStudents(3)
                     };
-                    if ((!this.state.useIHME) && this.state.useSept) {
+                    if ((this.state.model === 1) && this.state.useSept) {
                       // console.log(2);
                       return this.approxPositiveStudents(12)
                     };
-                    if ((!this.state.useIHME) && (!this.state.useSept)) {
+                    if ((this.state.model === 1) && (!this.state.useSept)) {
                       // console.log(3);
                       return this.approxPositiveStudents(9)
+                    };
+                    if (this.state.model === 2) {
+                      // console.log(3);
+                      return this.approxPositiveStudents(15)
                     };
                   })()
                 }
@@ -430,10 +459,10 @@ export default class Estimator extends React.Component {
         </div>}
       <hr id="separator"/>
       <section className="qSection">
-        <p> Page last updated 9:00am ET, 8/5/2020. </p>
+        <p> Page last updated 9:00pm ET, 8/5/2020. </p>
         <h2>About the data</h2>
         <p style={{textAlign: 'left', padding: '10px'}}>
-          We use two different models: University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, both of which estimate the true number of active infections in each state today. Multiplying the number of active infections by the PCR test positivity rate gives us an estimate for the number of people in the state who would test positive. Read more about each model's assumptions  <a href="http://www.healthdata.org/covid/faqs" target="_blank">here</a> (IHME) and  <a href="https://covid19-projections.com/about/#about-the-model" target="_blank">here</a> (YYG). Dividing the number of positive tests by a state's population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students. Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
+          Our first two models, University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a> both estimate the true number of active infections in each state today. The New York Times option, meanwhile, draws from their database of cases and uses work from researchers at UT Austin to multiply the number of cases in each state by 5 to estimate the true active infections, with a multiplier of 3 and 10 for lower and upper bounds, respectively. Multiplying the number of active infections by the PCR test positivity rate gives us an estimate for the number of people in the state who would test positive. Read more about each model's assumptions  <a href="http://www.healthdata.org/covid/faqs" target="_blank">here</a> (IHME), <a href="https://covid19-projections.com/about/#about-the-model" target="_blank">here</a> (YYG), and <a href="https://sites.cns.utexas.edu/sites/default/files/cid/files/covid_healthcare_projections_texas_tsas_august_2020.pdf?m=1596321322" target="_blank">here</a> (UT). Dividing the number of positive tests by a state's population gives us a rough estimate of the COVID-19 positivity rate statewide, which we can then multiply by the number of students arriving from that state to find an expected number of COVID-19 positive students.<br/><br/>Our intention is to help universities understand how many isolation rooms are necessary at the start of the semester. This calculator is a project of the MGGG Redistricting Lab
           (<a href="https://mggg.org" target="_blank">mggg.org</a>)
           at Tisch College of Tufts University.  For information, contact&nbsp;
           <a href="mailto:Moon.Duchin@tufts.edu">Moon.Duchin@tufts.edu</a>.

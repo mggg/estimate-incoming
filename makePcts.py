@@ -169,6 +169,64 @@ def getIHME():
     result.to_csv("./public/IHME_pcts.csv", index=False)
     return
 
+def getNYT():
+    # Download the NYTimes Data
+    dates = [today] # changed to just today
+    NYT_url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv'
+    result = pd.DataFrame(columns=["location_name", "lower_prob", "mean_prob", "upper_prob"])
+
+    for i, date in enumerate(dates):
+        positivesLower = 0
+        positivesMean = 0
+        positivesUpper = 0
+        pop = 0
+        for abbrev in abbrevs:
+            state = abbrev_us_state[abbrev]
+            df = pd.read_csv(NYT_url)
+
+            currentPositivesLower = 0
+            currentPositivesMean = 0
+            currentPositivesUpper = 0
+            for k in range(5,22):
+                pastDate = date - dt.timedelta(days=k)
+                pastDate_dayBefore = pastDate - dt.timedelta(days=1)
+                pastDate_strf = pastDate.strftime("%Y-%m-%d")
+                pastDate_dayBefore_strf = pastDate_dayBefore.strftime("%Y-%m-%d")
+                k_days_ago = (df["date"] == pastDate_strf)
+                km1_days_ago = (df["date"] == pastDate_dayBefore_strf)
+                ourState = (df['state'] == state)
+                df_pastDate = df.loc[k_days_ago & ourState]
+                df_pastDate_dayBefore = df.loc[km1_days_ago & ourState]
+
+                newCases = df_pastDate['cases'].sum() - df_pastDate_dayBefore['cases'].sum()
+
+                currentPositivesLower += (3 * newCases * probPCRPos(k))
+                currentPositivesMean += (5 * newCases * probPCRPos(k))
+                currentPositivesUpper += (10 * newCases * probPCRPos(k))
+
+            positivesLower += currentPositivesLower
+            positivesMean += currentPositivesMean
+            positivesUpper += currentPositivesUpper
+            pop += statePops[state]
+            probPositiveLower = currentPositivesLower / statePops[state]
+            probPositiveMean = currentPositivesMean / statePops[state]
+            probPositiveUpper = currentPositivesUpper / statePops[state]
+
+            if (i == 0):
+                result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] \
+                    = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
+            else:
+                print("Are we doing September?")
+
+        if (i == 0):
+            intlProbLower = positivesLower/pop
+            intlProbMean = positivesMean/pop
+            intlProbUpper = positivesUpper/pop
+            result.loc[result.index.max() + 1] = ['International', intlProbLower, intlProbMean, intlProbUpper]
+
+    result.to_csv("./public/NYT_pcts.csv", index=False)
+    return
+
 def sh(script, msg=0):
     os.system("zsh -c '%s'" % script)
 
@@ -183,3 +241,8 @@ if __name__=="__main__":
         sh('echo "got MIT data"')
     except:
         sh('echo "error getting MIT data"')
+    try:
+        getNYT()
+        sh('echo "got NYT data"')
+    except:
+        sh('echo "error getting NYT data"')
