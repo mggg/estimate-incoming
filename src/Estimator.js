@@ -459,7 +459,7 @@ export default class Estimator extends React.Component {
         </div>}
       <hr id="separator"/>
       <section className="qSection">
-        <p> Page last updated 9:00am ET, 9/29/2020</p>
+        <p> Page last updated 9:30am ET, 9/30/2020</p>
         <h2>About the data</h2>
         <p style={{textAlign: 'left', padding: '10px'}}>
           The first two models — University of Washington's <a href="http://www.healthdata.org/covid/data-downloads" target="_blank">IHME</a> and Youyang Gu's <a href="https://covid19-projections.com/" target="_blank">COVID-19 projections</a>, called YYG — both estimate the true number of active infections in each state today with a methodology that centers on the death count rather than the case count. IHME projects the death rate out a few weeks into the future and works from there to estimate how many people are infected each day, taking the age structure of the state into account. YYG also uses death data, but has a machine learning step to "learn" the epidemiological parameters from that.
