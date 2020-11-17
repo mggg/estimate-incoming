@@ -105,7 +105,7 @@ def getIHME():
     df = pd.read_csv("./Data" + IHME_fileName)
 
     # Clean IHME Data
-    start_date = "2020-06-01"
+    start_date = "2020-10-01"
     in_US = df["location_name"].isin(states)
     after_start_date = df["date"] >= start_date
     in_US_and_recent = in_US & after_start_date
@@ -113,10 +113,10 @@ def getIHME():
 
     #  Make final CSV
     result = pd.DataFrame(columns=["location_name", "lower_prob", "mean_prob", "upper_prob"])
-    resultSept = pd.DataFrame(columns=["lower_prob_sept", "mean_prob_sept", "upper_prob_sept"])
+    resultJan = pd.DataFrame(columns=["lower_prob_jan", "mean_prob_jan", "upper_prob_jan"])
 
-    sept = dt.date(2020,9,1)
-    dates = [today, sept]
+    jan = dt.date(2021,1,15)
+    dates = [today, jan]
 
     for j, date in enumerate(dates):
         positivesLower = 0
@@ -152,7 +152,7 @@ def getIHME():
             if (j == 0):
                 result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
             else:
-                resultSept.loc[0 if pd.isnull(resultSept.index.max()) else resultSept.index.max() + 1] = [probPositiveLower, probPositiveMean, probPositiveUpper]
+                resultJan.loc[0 if pd.isnull(resultJan.index.max()) else resultJan.index.max() + 1] = [probPositiveLower, probPositiveMean, probPositiveUpper]
 
         if (j == 0):
             intlProbLower = positivesLower/pop
@@ -163,9 +163,9 @@ def getIHME():
             intlProbLower = positivesLower/pop
             intlProbMean = positivesMean/pop
             intlProbUpper = positivesUpper/pop
-            resultSept.loc[resultSept.index.max() + 1] = [intlProbLower, intlProbMean, intlProbUpper]
+            resultJan.loc[resultJan.index.max() + 1] = [intlProbLower, intlProbMean, intlProbUpper]
 
-    result = pd.concat([result, resultSept], axis=1)
+    result = pd.concat([result, resultJan], axis=1)
     result.to_csv("./public/IHME_pcts.csv", index=False)
     return
 
@@ -216,7 +216,7 @@ def getNYT():
                 result.loc[0 if pd.isnull(result.index.max()) else result.index.max() + 1] \
                     = [state, probPositiveLower, probPositiveMean, probPositiveUpper]
             else:
-                print("Are we doing September?")
+                print("Are we doing January?")
 
         if (i == 0):
             intlProbLower = positivesLower/pop
@@ -231,16 +231,16 @@ def sh(script, msg=0):
     os.system("zsh -c '%s'" % script)
 
 if __name__=="__main__":
-    try:
-        getIHME()
-        sh('echo "got IHME data"')
-    except:
-        sh('echo "error getting IHME data"')
-    try:
-        getMIT()
-        sh('echo "got MIT data"')
-    except:
-        sh('echo "error getting MIT data"')
+    # try:
+    #     getIHME()
+    #     sh('echo "got IHME data"')
+    # except:
+    #     sh('echo "error getting IHME data"')
+    # try:
+    #     getMIT()
+    #     sh('echo "got MIT data"')
+    # except:
+    #     sh('echo "error getting MIT data"')
     try:
         getNYT()
         sh('echo "got NYT data"')

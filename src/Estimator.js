@@ -121,7 +121,7 @@ export default class Estimator extends React.Component {
       ihme_df = new DataFrame(rows, [
         "location_name","lower_prob", "mean_prob", "upper_prob", "lower_prob_jan", "mean_prob_jan", "upper_prob_jan"]);
 
-      d3.csv('/estimate-incoming/MIT_pcts.csv').then(rows => {
+      d3.csv('/estimate-incoming/MIT_pcts_OLD.csv').then(rows => {
         {};
         // rows.forEach(r => r.location_name = r.location_name.toLowerCase())
         // mit_df = new DataFrame(rows, [
