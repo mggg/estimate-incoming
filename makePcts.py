@@ -26,7 +26,7 @@ for i, row in statePopsFile.iterrows():
     statePops[row[0]] = row[1]
 
 def probPCRPos(i):
-    return -0.025*i + 1.125
+    return -0.0222*i + 1.0667
 
 def getMIT():
     twoDaysAgo = (today - dt.timedelta(days=2)).strftime("%Y-%m-%d")
@@ -231,11 +231,11 @@ def sh(script, msg=0):
     os.system("zsh -c '%s'" % script)
 
 if __name__=="__main__":
-    # try:
-    #     getIHME()
-    #     sh('echo "got IHME data"')
-    # except:
-    #     sh('echo "error getting IHME data"')
+    try:
+        getIHME()
+        sh('echo "got IHME data"')
+    except:
+        sh('echo "error getting IHME data"')
     # try:
     #     getMIT()
     #     sh('echo "got MIT data"')
