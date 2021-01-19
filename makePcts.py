@@ -115,8 +115,8 @@ def getIHME():
     result = pd.DataFrame(columns=["location_name", "lower_prob", "mean_prob", "upper_prob"])
     resultJan = pd.DataFrame(columns=["lower_prob_jan", "mean_prob_jan", "upper_prob_jan"])
 
-    jan = dt.date(2021,1,15)
-    dates = [today, jan]
+    feb = dt.date(2021,2,15)
+    dates = [today, feb]
 
     for j, date in enumerate(dates):
         positivesLower = 0

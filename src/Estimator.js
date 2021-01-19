@@ -287,7 +287,7 @@ export default class Estimator extends React.Component {
           Matched {Math.round(estStudents/allStudents*100)}% of students
         </td>
         <td colSpan="2"><strong><h2>{sum.toFixed(2)}</h2>[{lowerSum.toFixed(2)}, {upperSum.toFixed(2)}]</strong><br/>Estimated COVID-19+ students {this.state.useJan
-          ? "on 1/15"
+          ? "on 2/15"
           : "today"} {"(" + modelNames[this.state.model] + ")"}
         <br/>{((this.state.model === 0) | (this.state.model === 1))
           ? "[95% confidence interval]"
@@ -325,7 +325,7 @@ export default class Estimator extends React.Component {
           </nav>
           <section className="qSection">
             <p style={{textAlign: 'left', padding: '10px'}}>
-              <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they return to campus in January 2021.</strong><br/><br/>
+              <strong>This calculator is intended to help university leadership estimate how many students will immediately test positive for COVID-19 as they return to campus in February 2021.</strong><br/><br/>
               This is a web tool to interface with two COVID tracking models that estimate how many people in each state become infected with COVID-19 each day. (See below for model explanations)<br/><br/>
               <strong>How to use the calculator:</strong> We have provided a template CSV that contains rows for 50 states, plus Puerto Rico (PR), Washington, D.C. (DC), and international students (international). Before uploading, be sure that the first row has precisely two headers — 'state' and 'student'. After inputting your data, you can see the total estimated number of students who would test COVID-19 positive <i>today</i> or on <i>Jan. 15</i>, according to each model.  We also show a confidence interval and a state-by-state breakdown according to the same models. By default, the calculator is populated with partial data from Tufts University.<br/><br/>We emphasize that this estimator is for PCR test positivity, rather than infection or symptoms.
             </p>
@@ -373,7 +373,7 @@ export default class Estimator extends React.Component {
               </div>
             : <div className="row">
                 <div className="offset-4">
-                  <DropdownButton id="dropdown" title={this.state.useJan ? "Jan. 15 Estimate" : "Today's Estimate"}>
+                  <DropdownButton id="dropdown" title={this.state.useJan ? "Feb. 15 Estimate" : "Today's Estimate"}>
                     <Dropdown.Item onClick={() => this.setState({
                       useJan: false
                     })}>
@@ -382,7 +382,7 @@ export default class Estimator extends React.Component {
                     <Dropdown.Item disabled={this.state.model === 2} onClick={() => this.setState({
                       useJan: true
                     })}>
-                      Jan. 15 Estimate
+                      Feb. 15 Estimate
                     </Dropdown.Item>
                   </DropdownButton>
                 </div>
@@ -444,7 +444,7 @@ export default class Estimator extends React.Component {
       {this.state.exportClicked
         ? <div>
             <p className="qSection" style={{textAlign:"left", padding: '10px'}}>
-              You should now have 'stateCovidProbabilities.csv' in your Downloads folder. It contains a row for every state for which you submitted states-of-origin data. There is a column for the number of students incoming from that state. The rest of the columns provide the estimated proportion of that state that is COVID+ using each model. The IHME model provides an estimate for today as well as a prediction for Jan. 15, and both models provide lower and upper bounds for each proportion. To find the number of students incoming from a state that are expected to test positive, multiply the number of students column by the corresponding state proportion column.
+              You should now have 'stateCovidProbabilities.csv' in your Downloads folder. It contains a row for every state for which you submitted states-of-origin data. There is a column for the number of students incoming from that state. The rest of the columns provide the estimated proportion of that state that is COVID+ using each model. The IHME model provides an estimate for today as well as a prediction for Feb. 15, and both models provide lower and upper bounds for each proportion. To find the number of students incoming from a state that are expected to test positive, multiply the number of students column by the corresponding state proportion column.
             </p>
           </div>
         : <div>
